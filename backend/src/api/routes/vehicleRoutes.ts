@@ -14,7 +14,7 @@ vehicleRouter.get('/', async (_req: Request, res: Response) => {
 })
 
 vehicleRouter.delete('/:id', async (req: Request, res: Response) => {
-  const { deleted } = await deleteVehicleUseCase.execute(req.params.id)
+  const { deleted } = await deleteVehicleUseCase.execute(String(req.params.id))
   if (!deleted) {
     res.status(404).json({ error: 'Vehicle not found' })
     return

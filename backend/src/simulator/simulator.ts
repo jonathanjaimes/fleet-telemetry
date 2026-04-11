@@ -164,9 +164,22 @@ function startVehicle(index: number): void {
 
 // ─── Inicio ───────────────────────────────────────────────────────────────────
 
+function get(url: string): Promise<number> {
+  return new Promise((resolve) => {
+    const parsedUrl = new URL(url)
+    const lib = parsedUrl.protocol === 'https:' ? https : http
+    const req = lib.request(
+      { hostname: parsedUrl.hostname, port: parsedUrl.port, path: parsedUrl.pathname, method: 'GET' },
+      (res) => resolve(res.statusCode ?? 0)
+    )
+    req.on('error', () => resolve(0))
+    req.end()
+  })
+}
+
 async function waitForBackend(retries = 20): Promise<void> {
   for (let i = 0; i < retries; i++) {
-    const status = await post(`${BACKEND_URL}/health`, {})
+    const status = await get(`${BACKEND_URL}/health`)
     if (status === 200) {
       console.log('[Simulator] Backend is ready')
       return
