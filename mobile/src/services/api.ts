@@ -2,9 +2,9 @@ import axios from 'axios'
 
 // En desarrollo apunta al backend local.
 // En producción se reemplazaría con la URL real del servidor.
-// Usa la IP local de tu Mac para que el celular físico pueda conectarse.
-// localhost solo funciona en emulador, no en dispositivo real.
-const BACKEND_URL = 'http://192.168.1.7:3001'
+// URL pública temporal via Cloudflare Tunnel para pruebas con dispositivo físico.
+// En producción se reemplaza con la URL real del servidor.
+const BACKEND_URL = 'https://causes-bone-carried-href.trycloudflare.com'
 
 const client = axios.create({
   baseURL: BACKEND_URL,
@@ -29,15 +29,9 @@ export async function sendGpsReading(payload: GpsPayload): Promise<'accepted' | 
   }
 }
 
-export async function sendPanicAlert(vehicle_id: string): Promise<boolean> {
+export async function sendPanicAlert(vehicle_id: string, lat: number, lng: number): Promise<boolean> {
   try {
-    await client.post('/api/gps/ingest', {
-      vehicle_id,
-      lat: 0,
-      lng: 0,
-      timestamp: new Date().toISOString(),
-      panic: true,
-    })
+    await client.post(`/api/vehicles/${vehicle_id}/panic`, { lat, lng })
     return true
   } catch {
     return false

@@ -82,13 +82,15 @@ export function useTelemetry() {
   }, [])
 
   const triggerPanic = useCallback(async () => {
-    const sent = await sendPanicAlert(VEHICLE_ID)
+    const lat = location?.lat ?? 0
+    const lng = location?.lng ?? 0
+    const sent = await sendPanicAlert(VEHICLE_ID, lat, lng)
     await addAlert({
       message: sent ? '🚨 Botón de pánico activado — alerta enviada al servidor' : '🚨 Botón de pánico activado — sin conexión',
       timestamp: new Date().toISOString(),
       type: 'PANIC_BUTTON',
     })
-  }, [addAlert])
+  }, [addAlert, location])
 
   return { status, location, trip, alerts, hasPermission, startTrip, stopTrip, triggerPanic }
 }

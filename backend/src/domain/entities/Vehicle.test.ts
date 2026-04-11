@@ -34,6 +34,14 @@ describe('isVehicleStopped', () => {
     )).toBe(false)
   })
 
+  it('should return true when GPS drift is within 11m tolerance (~4 decimal places)', () => {
+    expect(isVehicleStopped(
+      baseVehicle,
+      { lat: 4.60971, lng: -74.08172 },
+      STOPPED_THRESHOLD_MS
+    )).toBe(true)
+  })
+
   it('should return false when both lat and lng changed', () => {
     expect(isVehicleStopped(
       baseVehicle,

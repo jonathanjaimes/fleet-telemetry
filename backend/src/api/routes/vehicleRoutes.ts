@@ -1,16 +1,36 @@
 import { Router } from 'express'
 import type { Request, Response } from 'express'
+import { v4 as uuidv4 } from 'uuid'
 import { PgVehicleRepository } from '../../infrastructure/db/PgVehicleRepository'
+import { PgAlertRepository } from '../../infrastructure/db/PgAlertRepository'
 import { DeleteVehicleUseCase } from '../../application/delete-vehicle/DeleteVehicleUseCase'
+import { emitAlert, emitVehicleStatus } from '../../infrastructure/websocket/socketServer'
 
 export const vehicleRouter = Router()
 
 const vehicleRepo = new PgVehicleRepository()
+const alertRepo   = new PgAlertRepository()
 const deleteVehicleUseCase = new DeleteVehicleUseCase(vehicleRepo)
 
 vehicleRouter.get('/', async (_req: Request, res: Response) => {
   const vehicles = await vehicleRepo.findAll()
   res.json(vehicles)
+})
+
+vehicleRouter.post('/:id/panic', async (req: Request, res: Response) => {
+  const vehicle_id = String(req.params.id)
+  const alert = {
+    id: uuidv4(),
+    vehicle_id,
+    type: 'PANIC_BUTTON' as const,
+    message: '🚨 Botón de pánico activado por el conductor',
+    timestamp: new Date(),
+  }
+  await alertRepo.save(alert)
+  await vehicleRepo.upsert({ id: vehicle_id, status: 'alert', lat: req.body.lat ?? 0, lng: req.body.lng ?? 0, lastSeen: new Date() })
+  emitAlert(alert)
+  emitVehicleStatus(vehicle_id, 'alert')
+  res.status(201).json({ message: 'Panic alert registered' })
 })
 
 vehicleRouter.delete('/:id', async (req: Request, res: Response) => {
