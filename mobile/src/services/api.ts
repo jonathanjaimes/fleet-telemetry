@@ -2,7 +2,9 @@ import axios from 'axios'
 
 // En desarrollo apunta al backend local.
 // En producción se reemplazaría con la URL real del servidor.
-const BACKEND_URL = 'http://localhost:3001'
+// Usa la IP local de tu Mac para que el celular físico pueda conectarse.
+// localhost solo funciona en emulador, no en dispositivo real.
+const BACKEND_URL = 'http://192.168.1.7:3001'
 
 const client = axios.create({
   baseURL: BACKEND_URL,
