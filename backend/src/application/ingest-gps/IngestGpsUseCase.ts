@@ -43,7 +43,7 @@ export class IngestGpsUseCase {
     await cacheVehiclePosition(reading.vehicle_id, reading.lat, reading.lng, reading.timestamp)
 
     const existing = await this.vehicleRepo.findById(reading.vehicle_id)
-    let newStatus: 'moving' | 'stopped' | 'alert' = 'moving'
+    let newStatus: 'moving' | 'idle' | 'stopped' | 'alert' = 'moving'
 
     // Si el conductor acaba de detener el viaje manualmente, ignorar
     // paquetes GPS tardíos que podrían pisar el estado "stopped".
