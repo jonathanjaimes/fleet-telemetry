@@ -106,11 +106,6 @@ export function VehiclePanel() {
                   </div>
                   <div className="alert-item__body">
                     <div className="alert-item__vehicle">{alert.vehicle_id}</div>
-                    {alert.type && ALERT_CONFIG[alert.type as AlertType] && (
-                      <div className="alert-item__type">
-                        {ALERT_CONFIG[alert.type as AlertType].label}
-                      </div>
-                    )}
                     <div className="alert-item__message">{alert.message}</div>
                     <div className="alert-item__time">
                       🕐 {formatDateTime(alert.timestamp)}

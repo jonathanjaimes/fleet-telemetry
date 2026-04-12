@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { Vehicle } from '../../types'
 import { ALERT_CONFIG } from '../../types'
 import './vehicles.css'
@@ -25,7 +25,21 @@ function formatTime(iso: string): string {
 
 export function VehicleCard({ vehicle, isSelected, onClick, onDelete }: Props) {
   const [confirming, setConfirming] = useState(false)
+  const [, forceRender] = useState(0)
   const config = STATUS_CONFIG[vehicle.status]
+
+  const showAlertChip =
+    vehicle.lastAlertType &&
+    vehicle.alertChipExpiry &&
+    Date.now() < vehicle.alertChipExpiry
+
+  useEffect(() => {
+    if (!vehicle.alertChipExpiry) return
+    const remaining = vehicle.alertChipExpiry - Date.now()
+    if (remaining <= 0) return
+    const timer = setTimeout(() => forceRender((n) => n + 1), remaining)
+    return () => clearTimeout(timer)
+  }, [vehicle.alertChipExpiry])
 
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -71,7 +85,7 @@ export function VehicleCard({ vehicle, isSelected, onClick, onDelete }: Props) {
         </div>
       ) : (
         <>
-          {vehicle.status === 'alert' && vehicle.lastAlertType && (
+          {showAlertChip && vehicle.lastAlertType && (
             <div className="vehicle-card__alert-type">
               {ALERT_CONFIG[vehicle.lastAlertType].icon}{' '}
               {ALERT_CONFIG[vehicle.lastAlertType].label}

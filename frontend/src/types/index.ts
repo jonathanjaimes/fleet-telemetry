@@ -16,6 +16,7 @@ export interface Vehicle {
   lastSeen: string
   route: [number, number][]
   lastAlertType?: AlertType
+  alertChipExpiry?: number   // timestamp ms — cuándo dejar de mostrar el chip
 }
 
 export type AlertType =

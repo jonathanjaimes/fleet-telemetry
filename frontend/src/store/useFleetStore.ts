@@ -77,7 +77,8 @@ export const useFleetStore = create<FleetState>((set) => ({
       if (alert.vehicle_id && vehicles[alert.vehicle_id]) {
         vehicles[alert.vehicle_id] = {
           ...vehicles[alert.vehicle_id],
-          lastAlertType: alert.type,
+          lastAlertType:    alert.type,
+          alertChipExpiry:  Date.now() + 10_000,
         }
       }
       return {
