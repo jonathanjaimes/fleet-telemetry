@@ -14,6 +14,7 @@ export function useTelemetry(driverId: string) {
   const [trip, setTrip]               = useState<TripState>({ isActive: false, startedAt: null, vehicleId: VEHICLE_ID })
   const [alerts, setAlerts]           = useState<LocalAlert[]>([])
   const [hasPermission, setPermission] = useState<boolean | null>(null)
+  const [starting, setStarting]       = useState(false)
 
   const intervalRef  = useRef<ReturnType<typeof setInterval> | null>(null)
   const stoppingRef  = useRef(false)
@@ -82,6 +83,7 @@ export function useTelemetry(driverId: string) {
         })
 
         setStatus(result === 'error' ? 'disconnected' : 'connected')
+        if (result !== 'error') setStarting(false)
 
         if (result === 'error') {
           await addAlert({
@@ -107,7 +109,7 @@ export function useTelemetry(driverId: string) {
     stoppingRef.current = false
     sendTripStart(VEHICLE_ID)
     setTrip({ isActive: true, startedAt: new Date().toISOString(), vehicleId: VEHICLE_ID })
-    setStatus('connected')
+    setStarting(true)
   }, [])
 
   const stopTrip = useCallback(() => {
@@ -133,5 +135,5 @@ export function useTelemetry(driverId: string) {
     })
   }, [addAlert, location])
 
-  return { status, location, trip, alerts, hasPermission, startTrip, stopTrip, triggerPanic }
+  return { status, location, trip, alerts, hasPermission, starting, startTrip, stopTrip, triggerPanic }
 }

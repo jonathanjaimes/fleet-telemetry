@@ -126,7 +126,7 @@ const PANIC_OPTIONS: { type: string; label: string; icon: React.ComponentProps<t
 
 // ─── Pantalla principal ───────────────────────────────────────────────────────
 function TelemetryScreen({ driverId, onLogout }: { driverId: string; onLogout: () => void }) {
-  const { status, location, trip, alerts, hasPermission, startTrip, stopTrip, triggerPanic } =
+  const { status, location, trip, alerts, hasPermission, starting, startTrip, stopTrip, triggerPanic } =
     useTelemetry(driverId)
   const [, forceRender]       = useState(0)
   const [panicModal, setPanicModal]   = useState(false)
@@ -225,14 +225,19 @@ function TelemetryScreen({ driverId, onLogout }: { driverId: string; onLogout: (
         <TouchableOpacity
           style={[styles.tripBtn, trip.isActive ? styles.tripBtnStop : styles.tripBtnStart]}
           onPress={trip.isActive ? stopTrip : startTrip}
+          disabled={starting}
         >
-          <Ionicons
-            name={trip.isActive ? 'stop-circle-outline' : 'play-circle-outline'}
-            size={22}
-            color="#fff"
-          />
+          {starting ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <Ionicons
+              name={trip.isActive ? 'stop-circle-outline' : 'play-circle-outline'}
+              size={22}
+              color="#fff"
+            />
+          )}
           <Text style={styles.tripBtnText}>
-            {trip.isActive ? 'Finalizar viaje' : 'Iniciar viaje'}
+            {starting ? 'Conectando...' : trip.isActive ? 'Finalizar viaje' : 'Iniciar viaje'}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
