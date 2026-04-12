@@ -23,6 +23,15 @@ vehicleRouter.post('/:id/start', async (req: Request, res: Response) => {
   await clearManualStop(vehicle_id)
   await clearDeletedFlag(vehicle_id)
   await clearStoppedSince(vehicle_id)
+
+  // Si el vehículo existe en DB, resetearlo a 'moving' para que el nuevo
+  // viaje no herede un estado de alerta o detenido previo
+  const existing = await vehicleRepo.findById(vehicle_id)
+  if (existing) {
+    await vehicleRepo.upsert({ ...existing, status: 'moving' })
+    emitVehicleStatus(vehicle_id, 'moving')
+  }
+
   res.json({ message: 'Vehicle trip started' })
 })
 
