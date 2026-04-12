@@ -44,4 +44,5 @@ export interface Alert {
   type?: AlertType
   message: string
   timestamp: string
+  resolved: boolean
 }

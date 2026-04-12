@@ -66,6 +66,7 @@ vehicleRouter.post('/:id/panic', async (req: Request, res: Response) => {
     type:      panicType,
     message:   PANIC_LABELS[panicType],
     timestamp: new Date(),
+    resolved:  false,
   }
   await alertRepo.save(alert)
   await vehicleRepo.upsert({

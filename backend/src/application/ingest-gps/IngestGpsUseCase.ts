@@ -77,6 +77,7 @@ export class IngestGpsUseCase {
               type: 'VEHICLE_STOPPED' as const,
               message: `Vehículo sin movimiento desde las ${lastMovement}`,
               timestamp: reading.timestamp,
+              resolved: false,
             }
             await this.alertRepo.save(alert)
             emitAlert(alert)

@@ -5,4 +5,5 @@ export interface IVehicleRepository {
   findById(id: string): Promise<Vehicle | null>
   findAll(): Promise<Vehicle[]>
   delete(id: string): Promise<void>
+  updateStatus(id: string, status: Vehicle['status']): Promise<void>
 }

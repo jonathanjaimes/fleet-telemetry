@@ -2,6 +2,7 @@ import http from 'http'
 import express from 'express'
 import { gpsRouter } from './api/routes/gpsRoutes'
 import { vehicleRouter } from './api/routes/vehicleRoutes'
+import { alertRouter } from './api/routes/alertRoutes'
 import { authRouter } from './api/routes/authRoutes'
 import { userRouter } from './api/routes/userRoutes'
 import { connectRedis } from './infrastructure/cache/redisClient'
@@ -41,6 +42,7 @@ async function bootstrap() {
   app.use('/api/users', userRouter)
   app.use('/api/gps', gpsRouter)
   app.use('/api/vehicles', vehicleRouter)
+  app.use('/api/alerts', alertRouter)
   app.get('/health', (_req, res) => res.json({ status: 'ok' }))
 
   const httpServer = http.createServer(app)

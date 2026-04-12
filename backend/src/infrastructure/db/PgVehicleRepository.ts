@@ -32,4 +32,8 @@ export class PgVehicleRepository implements IVehicleRepository {
   async delete(id: string): Promise<void> {
     await pgPool.query(`DELETE FROM vehicles WHERE id = $1`, [id])
   }
+
+  async updateStatus(id: string, status: Vehicle['status']): Promise<void> {
+    await pgPool.query(`UPDATE vehicles SET status = $1 WHERE id = $2`, [status, id])
+  }
 }

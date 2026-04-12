@@ -4,6 +4,7 @@ import { useFleetStore } from '../store/useFleetStore'
 import type { GpsReading, Alert } from '../types'
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL ?? 'http://localhost:3001'
+const BACKEND    = import.meta.env.VITE_BACKEND_URL ?? 'http://localhost:3001'
 
 let socket: Socket | null = null
 
@@ -12,12 +13,20 @@ export function useSocket() {
   const setVehicleStatus = useFleetStore((s) => s.setVehicleStatus)
   const removeVehicle    = useFleetStore((s) => s.removeVehicle)
   const addAlert         = useFleetStore((s) => s.addAlert)
+  const resolveAlert     = useFleetStore((s) => s.resolveAlert)
+  const loadAlerts       = useFleetStore((s) => s.loadAlerts)
   const setConnected     = useFleetStore((s) => s.setConnected)
 
   useEffect(() => {
     socket = io(SOCKET_URL, { transports: ['websocket'] })
 
-    socket.on('connect',    () => setConnected(true))
+    socket.on('connect', () => {
+      setConnected(true)
+      fetch(`${BACKEND}/api/alerts`)
+        .then((r) => r.json())
+        .then((data: Alert[]) => loadAlerts(data))
+        .catch(() => {/* silencioso */})
+    })
     socket.on('disconnect', () => setConnected(false))
 
     socket.on('gps:update', (reading: GpsReading) => {
@@ -29,8 +38,12 @@ export function useSocket() {
     })
 
     socket.on('alert:new', (alert: Alert) => {
-      addAlert(alert)
+      addAlert({ ...alert, resolved: false })
       setVehicleStatus(alert.vehicle_id, 'alert')
+    })
+
+    socket.on('alert:resolved', (data: { alert_id: string; vehicle_id: string; alert_type: string }) => {
+      resolveAlert(data.alert_id, data.vehicle_id, data.alert_type)
     })
 
     socket.on('vehicle:deleted', (data: { vehicle_id: string }) => {
@@ -41,5 +54,5 @@ export function useSocket() {
       socket?.disconnect()
       socket = null
     }
-  }, [updateVehicle, setVehicleStatus, removeVehicle, addAlert, setConnected])
+  }, [updateVehicle, setVehicleStatus, removeVehicle, addAlert, resolveAlert, loadAlerts, setConnected])
 }

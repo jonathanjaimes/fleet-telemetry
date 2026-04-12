@@ -11,6 +11,8 @@ interface FleetState {
   setVehicleStatus: (vehicle_id: string, status: Vehicle['status']) => void
   removeVehicle: (vehicle_id: string) => void
   addAlert: (alert: Alert) => void
+  resolveAlert: (alert_id: string, vehicle_id: string, alert_type: string) => void
+  loadAlerts: (alerts: Alert[]) => void
   selectVehicle: (id: string | null) => void
   setConnected: (connected: boolean) => void
 }
@@ -79,15 +81,32 @@ export const useFleetStore = create<FleetState>((set) => ({
       if (alert.vehicle_id && vehicles[alert.vehicle_id]) {
         vehicles[alert.vehicle_id] = {
           ...vehicles[alert.vehicle_id],
-          lastAlertType:    alert.type,
-          alertChipExpiry:  Date.now() + 10_000,
+          lastAlertType:   alert.type,
+          alertChipExpiry: Date.now() + 10_000,
         }
       }
       return {
-        alerts: [alert, ...state.alerts].slice(0, 50),
+        alerts: [alert, ...state.alerts].slice(0, 100),
         vehicles,
       }
     }),
+
+  resolveAlert: (alert_id, vehicle_id, alert_type) =>
+    set((state) => {
+      const alerts = state.alerts.map((a) =>
+        a.id === alert_id ? { ...a, resolved: true } : a
+      )
+      const vehicles = { ...state.vehicles }
+      if (alert_type === 'VEHICLE_STOPPED' && vehicles[vehicle_id]) {
+        const v = vehicles[vehicle_id]
+        if (v.status === 'alert') {
+          vehicles[vehicle_id] = { ...v, status: 'idle' }
+        }
+      }
+      return { alerts, vehicles }
+    }),
+
+  loadAlerts: (alerts) => set({ alerts }),
 
   selectVehicle: (id) => set({ selectedVehicleId: id }),
 

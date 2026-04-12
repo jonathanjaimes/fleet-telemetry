@@ -1,10 +1,12 @@
 import { useState } from 'react'
-import { Truck, Bell, AlertTriangle, Clock } from 'lucide-react'
+import { Truck, Bell, AlertTriangle, Clock, CheckCircle, CircleAlert } from 'lucide-react'
 import { useFleetStore } from '../../store/useFleetStore'
 import { VehicleCard } from './VehicleCard'
 import { ALERT_CONFIG } from '../../types'
 import type { AlertType } from '../../types'
 import './vehicles.css'
+
+const BACKEND = 'http://localhost:3001'
 
 type Tab = 'fleet' | 'alerts'
 
@@ -17,19 +19,31 @@ function formatDateTime(iso: string): string {
 
 export function VehiclePanel() {
   const [activeTab, setActiveTab] = useState<Tab>('fleet')
+  const [confirmingId, setConfirmingId] = useState<string | null>(null)
 
   const vehicles      = useFleetStore((s) => s.vehicles)
   const alerts        = useFleetStore((s) => s.alerts)
   const selectedId    = useFleetStore((s) => s.selectedVehicleId)
   const selectVehicle = useFleetStore((s) => s.selectVehicle)
   const isConnected   = useFleetStore((s) => s.isConnected)
+  const resolveAlert  = useFleetStore((s) => s.resolveAlert)
 
   const vehicleList = Object.values(vehicles)
   const alertCount  = vehicleList.filter((v) => v.status === 'alert').length
-  const newAlerts   = alerts.length
+
+  const pending  = alerts.filter((a) => !a.resolved)
+  const resolved = alerts.filter((a) => a.resolved)
 
   const handleDelete = async (id: string) => {
-    await fetch(`http://localhost:3001/api/vehicles/${id}`, { method: 'DELETE' })
+    await fetch(`${BACKEND}/api/vehicles/${id}`, { method: 'DELETE' })
+  }
+
+  const handleResolve = async (id: string) => {
+    const res = await fetch(`${BACKEND}/api/alerts/${id}/resolve`, { method: 'PATCH' })
+    if (!res.ok) return
+    const alert = alerts.find((a) => a.id === id)
+    if (alert) resolveAlert(id, alert.vehicle_id, alert.type ?? '')
+    setConfirmingId(null)
   }
 
   return (
@@ -56,8 +70,8 @@ export function VehiclePanel() {
           onClick={() => setActiveTab('alerts')}
         >
           <Bell size={14} /> Alertas
-          {newAlerts > 0 && (
-            <span className="panel-tab__badge panel-tab__badge--danger">{newAlerts}</span>
+          {pending.length > 0 && (
+            <span className="panel-tab__badge panel-tab__badge--danger">{pending.length}</span>
           )}
         </button>
       </div>
@@ -94,11 +108,20 @@ export function VehiclePanel() {
       {/* Tab: Alertas */}
       {activeTab === 'alerts' && (
         <div className="alerts-panel">
-          {alerts.length === 0 ? (
-            <p className="vehicle-panel__empty">Sin alertas registradas</p>
+
+          {/* Pendientes */}
+          <div className="alerts-section-header">
+            <CircleAlert size={13} />
+            <span>Por solucionar</span>
+            {pending.length > 0 && (
+              <span className="alerts-section-count alerts-section-count--danger">{pending.length}</span>
+            )}
+          </div>
+          {pending.length === 0 ? (
+            <p className="vehicle-panel__empty vehicle-panel__empty--sm">Sin alertas pendientes</p>
           ) : (
             <ul className="alerts-list">
-              {alerts.map((alert) => (
+              {pending.map((alert) => (
                 <li key={alert.id} className="alert-item">
                   <div className="alert-item__icon">
                     {alert.type && ALERT_CONFIG[alert.type as AlertType]
@@ -112,10 +135,70 @@ export function VehiclePanel() {
                       <Clock size={11} /> {formatDateTime(alert.timestamp)}
                     </div>
                   </div>
+                  <button
+                    className="alert-resolve-btn"
+                    onClick={() => setConfirmingId(alert.id)}
+                    title="Marcar como solucionada"
+                  >
+                    <CheckCircle size={16} />
+                  </button>
                 </li>
               ))}
             </ul>
           )}
+
+          {/* Resueltas */}
+          <div className="alerts-section-header alerts-section-header--resolved">
+            <CheckCircle size={13} />
+            <span>Solucionadas</span>
+            {resolved.length > 0 && (
+              <span className="alerts-section-count">{resolved.length}</span>
+            )}
+          </div>
+          {resolved.length === 0 ? (
+            <p className="vehicle-panel__empty vehicle-panel__empty--sm">Sin alertas solucionadas</p>
+          ) : (
+            <ul className="alerts-list alerts-list--resolved">
+              {resolved.map((alert) => (
+                <li key={alert.id} className="alert-item alert-item--resolved">
+                  <div className="alert-item__icon alert-item__icon--resolved">
+                    {alert.type && ALERT_CONFIG[alert.type as AlertType]
+                      ? ALERT_CONFIG[alert.type as AlertType].icon
+                      : <AlertTriangle size={14} />}
+                  </div>
+                  <div className="alert-item__body">
+                    <div className="alert-item__vehicle">{alert.vehicle_id}</div>
+                    <div className="alert-item__message">{alert.message}</div>
+                    <div className="alert-item__time">
+                      <Clock size={11} /> {formatDateTime(alert.timestamp)}
+                    </div>
+                  </div>
+                  <CheckCircle size={14} className="alert-resolved-check" />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {/* Modal de confirmación de resolución */}
+      {confirmingId && (
+        <div className="resolve-modal-overlay" onClick={() => setConfirmingId(null)}>
+          <div className="resolve-modal" onClick={(e) => e.stopPropagation()}>
+            <CheckCircle size={28} className="resolve-modal__icon" />
+            <p className="resolve-modal__title">¿Confirmar resolución?</p>
+            <p className="resolve-modal__body">
+              Marca esta alerta como solucionada. Si el vehículo estaba en estado de alerta por ausencia de movimiento, pasará a inactivo.
+            </p>
+            <div className="resolve-modal__actions">
+              <button className="resolve-modal__confirm" onClick={() => handleResolve(confirmingId)}>
+                Sí, está solucionada
+              </button>
+              <button className="resolve-modal__cancel" onClick={() => setConfirmingId(null)}>
+                Cancelar
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </aside>

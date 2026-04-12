@@ -47,3 +47,7 @@ export function emitAlert(alert: Alert): void {
 export function emitVehicleDeleted(vehicle_id: string): void {
   io?.emit('vehicle:deleted', { vehicle_id })
 }
+
+export function emitAlertResolved(alert_id: string, vehicle_id: string, alert_type: string): void {
+  io?.emit('alert:resolved', { alert_id, vehicle_id, alert_type })
+}

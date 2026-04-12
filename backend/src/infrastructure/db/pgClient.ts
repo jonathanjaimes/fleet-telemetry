@@ -33,8 +33,11 @@ export async function runMigrations(): Promise<void> {
       vehicle_id  VARCHAR(100) NOT NULL,
       type        VARCHAR(50) NOT NULL,
       message     TEXT NOT NULL,
-      timestamp   TIMESTAMPTZ NOT NULL
+      timestamp   TIMESTAMPTZ NOT NULL,
+      resolved    BOOLEAN NOT NULL DEFAULT FALSE
     );
+
+    ALTER TABLE alerts ADD COLUMN IF NOT EXISTS resolved BOOLEAN NOT NULL DEFAULT FALSE;
 
     CREATE INDEX IF NOT EXISTS idx_gps_vehicle_time
       ON gps_readings(vehicle_id, timestamp DESC);
