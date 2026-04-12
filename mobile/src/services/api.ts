@@ -1,16 +1,24 @@
 import axios from 'axios'
 import Constants from 'expo-constants'
 
-// Detecta automáticamente la IP de la máquina donde corre Expo en desarrollo.
-// Así el jurado no necesita configurar nada manualmente.
-// En producción apuntaría a la URL real del servidor en la nube.
+// Detecta la URL del backend según el entorno:
+// - Si hay variable de entorno EXPO_PUBLIC_BACKEND_URL → la usa (producción o tunnel manual)
+// - Si Expo corre en LAN → usa la IP de la máquina automáticamente
+// - Fallback → localhost
 function getBackendUrl(): string {
+  const envUrl = process.env.EXPO_PUBLIC_BACKEND_URL
+  if (envUrl) return envUrl
+
   const expoHost = Constants.expoConfig?.hostUri?.split(':')[0]
-  if (expoHost) return `http://${expoHost}:3001`
+  if (expoHost && !expoHost.includes('exp.direct')) {
+    return `http://${expoHost}:3001`
+  }
+
   return 'http://localhost:3001'
 }
 
 const BACKEND_URL = getBackendUrl()
+console.log('[API] Backend URL:', BACKEND_URL)
 
 const client = axios.create({
   baseURL: BACKEND_URL,
