@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   StyleSheet, SafeAreaView, StatusBar, Alert, ActivityIndicator,
+  KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard,
 } from 'react-native'
 import { useTelemetry } from './src/hooks/useTelemetry'
 import { loginDriver } from './src/services/api'
@@ -65,32 +66,42 @@ function LoginScreen({ onLogin }: { onLogin: (id: string) => void }) {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#0f1117" />
-      <View style={styles.loginBox}>
-        <Text style={styles.loginLogo}>🚛</Text>
-        <Text style={styles.loginTitle}>Fleet Telemetría</Text>
-        <Text style={styles.loginSubtitle}>Ingresa tu ID de conductor</Text>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.loginBox}>
+            <Text style={styles.loginLogo}>🚛</Text>
+            <Text style={styles.loginTitle}>Fleet Telemetría</Text>
+            <Text style={styles.loginSubtitle}>Ingresa tu ID de conductor</Text>
 
-        <TextInput
-          style={styles.loginInput}
-          value={uniqueId}
-          onChangeText={(t) => setUniqueId(t.toUpperCase())}
-          placeholder="Ej: DRV-AB3C9"
-          placeholderTextColor="#64748b"
-          autoCapitalize="characters"
-          autoCorrect={false}
-        />
-        {error ? <Text style={styles.loginError}>{error}</Text> : null}
-        <TouchableOpacity
-          style={[styles.loginBtn, (!uniqueId.trim() || loading) && styles.loginBtnDisabled]}
-          onPress={handleLogin}
-          disabled={!uniqueId.trim() || loading}
-        >
-          {loading
-            ? <ActivityIndicator color="#fff" />
-            : <Text style={styles.loginBtnText}>Ingresar</Text>
-          }
-        </TouchableOpacity>
-      </View>
+            <TextInput
+              style={styles.loginInput}
+              value={uniqueId}
+              onChangeText={(t) => setUniqueId(t.toUpperCase())}
+              placeholder="Ej: DRV-AB3C9"
+              placeholderTextColor="#64748b"
+              autoCapitalize="characters"
+              autoCorrect={false}
+              returnKeyType="done"
+              onSubmitEditing={handleLogin}
+            />
+            {error ? <Text style={styles.loginError}>{error}</Text> : null}
+            <TouchableOpacity
+              style={[styles.loginBtn, (!uniqueId.trim() || loading) && styles.loginBtnDisabled]}
+              onPress={handleLogin}
+              disabled={!uniqueId.trim() || loading}
+            >
+              {loading
+                ? <ActivityIndicator color="#fff" />
+                : <Text style={styles.loginBtnText}>Ingresar</Text>
+              }
+            </TouchableOpacity>
+          </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   )
 }
