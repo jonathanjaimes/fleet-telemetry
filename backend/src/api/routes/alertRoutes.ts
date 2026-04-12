@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { PgAlertRepository } from '../../infrastructure/db/PgAlertRepository'
 import { PgVehicleRepository } from '../../infrastructure/db/PgVehicleRepository'
 import { PgUserRepository } from '../../infrastructure/db/PgUserRepository'
+import { PgRouteRepository } from '../../infrastructure/db/PgRouteRepository'
 import { emitAlertResolved, emitVehicleStatus } from '../../infrastructure/websocket/socketServer'
 
 export const alertRouter = Router()
@@ -9,6 +10,7 @@ export const alertRouter = Router()
 const alertRepo   = new PgAlertRepository()
 const vehicleRepo = new PgVehicleRepository()
 const userRepo    = new PgUserRepository()
+const routeRepo   = new PgRouteRepository()
 
 async function resolveUserAlerts(uniqueId: string) {
   const user = await userRepo.findByUniqueId(uniqueId)
@@ -61,6 +63,12 @@ alertRouter.patch('/:id/resolve', async (req, res) => {
       if (vehicle && vehicle.status === 'alert') {
         await vehicleRepo.updateStatus(alert.vehicle_id, 'idle')
         emitVehicleStatus(alert.vehicle_id, 'idle')
+
+        // Solo cierra la ruta si la alerta fue de ausencia de movimiento
+        // (el conductor estaba genuinamente detenido, no es una alerta de pánico en marcha)
+        if (alert.type === 'VEHICLE_STOPPED') {
+          await routeRepo.endRoute(alert.vehicle_id)
+        }
       }
     }
 

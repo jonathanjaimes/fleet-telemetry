@@ -1,15 +1,16 @@
 import { useState } from 'react'
-import { Truck, Bell, AlertTriangle, Clock, CheckCircle, CircleAlert } from 'lucide-react'
+import { Truck, Bell, AlertTriangle, Clock, CheckCircle, CircleAlert, Route } from 'lucide-react'
 import { useFleetStore } from '../../store/useFleetStore'
 import { useAuthStore } from '../../store/useAuthStore'
 import { VehicleCard } from './VehicleCard'
+import { RoutesTab } from '../routes/RoutesTab'
 import { ALERT_CONFIG } from '../../types'
 import type { AlertType } from '../../types'
 import './vehicles.css'
 
 const BACKEND = 'http://localhost:3001'
 
-type Tab = 'fleet' | 'alerts'
+type Tab = 'fleet' | 'alerts' | 'routes'
 
 function formatDateTime(iso: string): string {
   const d = new Date(iso)
@@ -78,6 +79,12 @@ export function VehiclePanel() {
           {pending.length > 0 && (
             <span className="panel-tab__badge panel-tab__badge--danger">{pending.length}</span>
           )}
+        </button>
+        <button
+          className={`panel-tab ${activeTab === 'routes' ? 'panel-tab--active' : ''}`}
+          onClick={() => setActiveTab('routes')}
+        >
+          <Route size={14} /> Rutas
         </button>
       </div>
 
@@ -189,6 +196,9 @@ export function VehiclePanel() {
           </div>
         </div>
       )}
+
+      {/* Tab: Rutas */}
+      {activeTab === 'routes' && <RoutesTab />}
 
       {/* Modal de confirmación de resolución */}
       {confirmingId && (

@@ -3,6 +3,7 @@ import type { Request, Response } from 'express'
 import { v4 as uuidv4 } from 'uuid'
 import { PgVehicleRepository } from '../../infrastructure/db/PgVehicleRepository'
 import { PgAlertRepository } from '../../infrastructure/db/PgAlertRepository'
+import { PgRouteRepository } from '../../infrastructure/db/PgRouteRepository'
 import { DeleteVehicleUseCase } from '../../application/delete-vehicle/DeleteVehicleUseCase'
 import { emitAlert, emitVehicleStatus, emitVehicleDeleted } from '../../infrastructure/websocket/socketServer'
 import type { AlertType } from '../../domain/entities/Alert'
@@ -13,6 +14,7 @@ export const vehicleRouter = Router()
 
 const vehicleRepo = new PgVehicleRepository()
 const alertRepo   = new PgAlertRepository()
+const routeRepo   = new PgRouteRepository()
 const deleteVehicleUseCase = new DeleteVehicleUseCase(vehicleRepo)
 
 vehicleRouter.get('/', async (_req: Request, res: Response) => {
@@ -34,6 +36,9 @@ vehicleRouter.post('/:id/start', async (req: Request, res: Response) => {
     emitVehicleStatus(vehicle_id, 'moving')
   }
 
+  // Abre una nueva ruta de viaje
+  await routeRepo.startRoute(vehicle_id)
+
   res.json({ message: 'Vehicle trip started' })
 })
 
@@ -47,6 +52,10 @@ vehicleRouter.post('/:id/stop', async (req: Request, res: Response) => {
   await vehicleRepo.upsert({ ...existing, status: 'stopped' })
   await setManualStop(vehicle_id)
   emitVehicleStatus(vehicle_id, 'stopped')
+
+  // Cierra la ruta activa del vehículo
+  await routeRepo.endRoute(vehicle_id)
+
   res.json({ message: 'Vehicle marked as stopped' })
 })
 

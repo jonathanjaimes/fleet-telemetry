@@ -49,6 +49,16 @@ export async function runMigrations(): Promise<void> {
       created_by  UUID REFERENCES users(id),
       created_at  TIMESTAMPTZ DEFAULT NOW()
     );
+
+    CREATE TABLE IF NOT EXISTS routes (
+      id          UUID PRIMARY KEY,
+      vehicle_id  VARCHAR(100) NOT NULL,
+      started_at  TIMESTAMPTZ NOT NULL,
+      ended_at    TIMESTAMPTZ
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_routes_vehicle
+      ON routes(vehicle_id, started_at DESC);
   `)
 
   // Seed superadmin si no existe

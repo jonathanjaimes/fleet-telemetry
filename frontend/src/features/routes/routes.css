@@ -1,0 +1,253 @@
+/* ─── Contenedor general ──────────────────────────────────────────────────── */
+
+.routes-tab {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  padding: 0.75rem 1rem;
+  gap: 0.75rem;
+}
+
+/* ─── Controles superiores ───────────────────────────────────────────────── */
+
+.routes-tab__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.routes-vehicle-select {
+  flex: 1;
+  font-size: 0.78rem;
+  padding: 0.45rem 0.6rem;
+  background: var(--color-surface-2, #1a2035);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  outline: none;
+  cursor: pointer;
+}
+
+.routes-vehicle-select:focus {
+  border-color: var(--color-primary);
+}
+
+.routes-refresh-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.45rem;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.routes-refresh-btn:hover {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.routes-tab__hint {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+/* ─── Lista de rutas ─────────────────────────────────────────────────────── */
+
+.routes-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.route-item {
+  background: var(--color-surface-2, #1a2035);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.65rem 0.8rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.route-item:hover {
+  border-color: var(--color-primary);
+}
+
+.route-item--selected {
+  border-color: var(--color-primary);
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.route-item__top {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
+}
+
+.route-item__status {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.15rem 0.45rem;
+  border-radius: 99px;
+  background: var(--color-border);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.route-item__status--active {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--color-success, #22c55e);
+}
+
+.route-item__duration {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  margin-left: auto;
+}
+
+.route-item__chevron {
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.route-item__times {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.route-item__time-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+}
+
+.route-item__label {
+  font-weight: 600;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  width: 2.5rem;
+  flex-shrink: 0;
+}
+
+/* ─── Modal del mapa ─────────────────────────────────────────────────────── */
+
+.route-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.route-modal {
+  background: var(--color-surface, #111827);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  width: min(700px, 100%);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+
+.route-modal__header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.route-modal__title {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.route-modal__badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 99px;
+  background: var(--color-border);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.route-modal__badge--active {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--color-success, #22c55e);
+}
+
+.route-modal__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+
+.route-modal__close:hover {
+  color: var(--color-text);
+}
+
+.route-modal__map {
+  flex: 1;
+  min-height: 320px;
+  max-height: 500px;
+  position: relative;
+}
+
+.route-modal__placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 260px;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.route-modal__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.25rem;
+  border-top: 1px solid var(--color-border);
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  flex-wrap: wrap;
+}

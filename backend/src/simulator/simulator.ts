@@ -5,7 +5,6 @@ const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:3001'
 const INGEST_PATH = '/api/gps/ingest'
 
 // ─── Rutas reales por Bogotá ──────────────────────────────────────────────────
-// Cada vehículo sigue una ruta de coordenadas GPS reales por calles de Bogotá
 
 const VEHICLES: Array<{ id: string; route: [number, number][] }> = [
   {
@@ -55,14 +54,6 @@ const VEHICLES: Array<{ id: string; route: [number, number][] }> = [
   },
 ]
 
-// ─── Estado de cada vehículo ──────────────────────────────────────────────────
-
-const vehicleState = VEHICLES.map((v) => ({
-  ...v,
-  routeIndex: 0,
-  direction: 1 as 1 | -1,
-}))
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function randomBetween(min: number, max: number): number {
@@ -73,38 +64,49 @@ function shouldInject(percentage: number): boolean {
   return Math.random() < percentage / 100
 }
 
-function post(url: string, body: unknown): Promise<number> {
+function sleep(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms))
+}
+
+function request(
+  url: string,
+  method: 'GET' | 'POST',
+  body?: unknown,
+): Promise<number> {
   return new Promise((resolve) => {
-    const payload = JSON.stringify(body)
+    const payload = body !== undefined ? JSON.stringify(body) : undefined
     const parsedUrl = new URL(url)
     const lib = parsedUrl.protocol === 'https:' ? https : http
 
-    const req = lib.request(
-      {
-        hostname: parsedUrl.hostname,
-        port: parsedUrl.port,
-        path: parsedUrl.pathname,
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Content-Length': Buffer.byteLength(payload),
-        },
-      },
-      (res) => resolve(res.statusCode ?? 0)
-    )
+    const options: http.RequestOptions = {
+      hostname: parsedUrl.hostname,
+      port:     parsedUrl.port,
+      path:     parsedUrl.pathname + parsedUrl.search,
+      method,
+      headers:  payload
+        ? {
+            'Content-Type':   'application/json',
+            'Content-Length': Buffer.byteLength(payload),
+          }
+        : {},
+    }
 
+    const req = lib.request(options, (res) => resolve(res.statusCode ?? 0))
     req.on('error', () => resolve(0))
-    req.write(payload)
+    if (payload) req.write(payload)
     req.end()
   })
 }
 
-// ─── Lógica de envío ──────────────────────────────────────────────────────────
+const get  = (url: string) => request(url, 'GET')
+const post = (url: string, body: unknown) => request(url, 'POST', body)
+
+// ─── Lógica de envío GPS ──────────────────────────────────────────────────────
 
 async function sendReading(
   vehicle_id: string,
   lat: number,
-  lng: number
+  lng: number,
 ): Promise<void> {
   const endpoint = `${BACKEND_URL}${INGEST_PATH}`
   const timestamp = new Date().toISOString()
@@ -131,51 +133,58 @@ async function sendReading(
   // 10% peticiones duplicadas: reenvía el mismo dato inmediatamente
   if (shouldInject(10)) {
     const dupStatus = await post(endpoint, payload)
-    console.log(`[CHAOS][duplicate] ${vehicle_id} → HTTP ${dupStatus} (esperado 409)`)
+    console.log(
+      `[CHAOS][duplicate] ${vehicle_id} → HTTP ${dupStatus} (esperado 409)`,
+    )
   }
+}
+
+// ─── Ciclo de viaje (un trayecto = una ruta) ──────────────────────────────────
+
+async function runLap(
+  vehicleId: string,
+  route: [number, number][],
+  fromIdx: number,
+  toIdx: number,
+): Promise<void> {
+  // Notifica al backend que inicia un viaje (crea registro de ruta)
+  await post(`${BACKEND_URL}/api/vehicles/${vehicleId}/start`, {})
+  console.log(`[Simulator] [${vehicleId}] Viaje iniciado`)
+
+  const step = fromIdx <= toIdx ? 1 : -1
+  for (let i = fromIdx; i !== toIdx + step; i += step) {
+    const [lat, lng] = route[i]
+    await sendReading(vehicleId, lat, lng)
+    await sleep(randomBetween(2000, 5000))
+  }
+
+  // Notifica al backend que finaliza el viaje (cierra la ruta)
+  await post(`${BACKEND_URL}/api/vehicles/${vehicleId}/stop`, {})
+  console.log(`[Simulator] [${vehicleId}] Viaje finalizado`)
 }
 
 // ─── Bucle principal por vehículo ────────────────────────────────────────────
 
-function startVehicle(index: number): void {
-  const state = vehicleState[index]
+async function vehicleLoop(
+  vehicleId: string,
+  route: [number, number][],
+  startDelay: number,
+): Promise<void> {
+  // Pequeño retraso para que los vehículos no arranquen simultáneamente
+  await sleep(startDelay)
 
-  async function tick(): Promise<void> {
-    const [lat, lng] = state.route[state.routeIndex]
-    await sendReading(state.id, lat, lng)
+  while (true) {
+    // Trayecto de ida
+    await runLap(vehicleId, route, 0, route.length - 1)
+    await sleep(randomBetween(6000, 12000))
 
-    // Avanzar por la ruta (rebota al llegar al final)
-    state.routeIndex += state.direction
-    if (state.routeIndex >= state.route.length) {
-      state.routeIndex = state.route.length - 2
-      state.direction = -1
-    } else if (state.routeIndex < 0) {
-      state.routeIndex = 1
-      state.direction = 1
-    }
-
-    const interval = randomBetween(2000, 5000)
-    setTimeout(tick, interval)
+    // Trayecto de vuelta
+    await runLap(vehicleId, route, route.length - 1, 0)
+    await sleep(randomBetween(6000, 12000))
   }
-
-  // Pequeño retraso inicial para que no todos envíen al mismo tiempo
-  setTimeout(tick, index * 500)
 }
 
 // ─── Inicio ───────────────────────────────────────────────────────────────────
-
-function get(url: string): Promise<number> {
-  return new Promise((resolve) => {
-    const parsedUrl = new URL(url)
-    const lib = parsedUrl.protocol === 'https:' ? https : http
-    const req = lib.request(
-      { hostname: parsedUrl.hostname, port: parsedUrl.port, path: parsedUrl.pathname, method: 'GET' },
-      (res) => resolve(res.statusCode ?? 0)
-    )
-    req.on('error', () => resolve(0))
-    req.end()
-  })
-}
 
 async function waitForBackend(retries = 20): Promise<void> {
   for (let i = 0; i < retries; i++) {
@@ -185,20 +194,24 @@ async function waitForBackend(retries = 20): Promise<void> {
       return
     }
     console.log(`[Simulator] Waiting for backend... (${i + 1}/${retries})`)
-    await new Promise((r) => setTimeout(r, 3000))
+    await sleep(3000)
   }
   throw new Error('[Simulator] Backend did not respond in time')
 }
 
 async function main(): Promise<void> {
   console.log(`[Simulator] Starting — backend: ${BACKEND_URL}`)
-  console.log(`[Simulator] Vehicles: ${VEHICLES.length} | Chaos: 10% duplicates, 5% malformed`)
+  console.log(
+    `[Simulator] Vehicles: ${VEHICLES.length} | Chaos: 10% duplicates, 5% malformed`,
+  )
 
   await waitForBackend()
 
-  for (let i = 0; i < vehicleState.length; i++) {
-    startVehicle(i)
-  }
+  VEHICLES.forEach((v, i) => {
+    vehicleLoop(v.id, v.route, i * 1500).catch((err) =>
+      console.error(`[Simulator] Error in ${v.id}:`, err),
+    )
+  })
 }
 
 main().catch((err) => {
