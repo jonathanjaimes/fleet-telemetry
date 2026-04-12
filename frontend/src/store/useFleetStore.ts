@@ -9,6 +9,7 @@ interface FleetState {
 
   updateVehicle: (reading: GpsReading) => void
   setVehicleStatus: (vehicle_id: string, status: Vehicle['status']) => void
+  removeVehicle: (vehicle_id: string) => void
   addAlert: (alert: Alert) => void
   selectVehicle: (id: string | null) => void
   setConnected: (connected: boolean) => void
@@ -56,6 +57,15 @@ export const useFleetStore = create<FleetState>((set) => ({
           ...state.vehicles,
           [vehicle_id]: { ...vehicle, status },
         },
+      }
+    }),
+
+  removeVehicle: (vehicle_id) =>
+    set((state) => {
+      const { [vehicle_id]: _, ...rest } = state.vehicles
+      return {
+        vehicles: rest,
+        selectedVehicleId: state.selectedVehicleId === vehicle_id ? null : state.selectedVehicleId,
       }
     }),
 

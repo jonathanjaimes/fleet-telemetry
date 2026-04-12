@@ -30,6 +30,10 @@ export function VehiclePanel() {
   const alertCount  = vehicleList.filter((v) => v.status === 'alert').length
   const newAlerts   = alerts.length
 
+  const handleDelete = async (id: string) => {
+    await fetch(`http://localhost:3001/api/vehicles/${id}`, { method: 'DELETE' })
+  }
+
   return (
     <aside className="vehicle-panel">
 
@@ -82,6 +86,7 @@ export function VehiclePanel() {
                 vehicle={v}
                 isSelected={selectedId === v.id}
                 onClick={() => selectVehicle(selectedId === v.id ? null : v.id)}
+                onDelete={handleDelete}
               />
             ))
           )}

@@ -38,7 +38,12 @@ export function emitAlert(alert: Alert): void {
   io?.emit('alert:new', {
     id: alert.id,
     vehicle_id: alert.vehicle_id,
+    type: alert.type,
     message: alert.message,
     timestamp: alert.timestamp.toISOString(),
   })
+}
+
+export function emitVehicleDeleted(vehicle_id: string): void {
+  io?.emit('vehicle:deleted', { vehicle_id })
 }

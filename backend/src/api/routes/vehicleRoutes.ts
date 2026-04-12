@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { PgVehicleRepository } from '../../infrastructure/db/PgVehicleRepository'
 import { PgAlertRepository } from '../../infrastructure/db/PgAlertRepository'
 import { DeleteVehicleUseCase } from '../../application/delete-vehicle/DeleteVehicleUseCase'
-import { emitAlert, emitVehicleStatus } from '../../infrastructure/websocket/socketServer'
+import { emitAlert, emitVehicleStatus, emitVehicleDeleted } from '../../infrastructure/websocket/socketServer'
 
 export const vehicleRouter = Router()
 
@@ -46,10 +46,12 @@ vehicleRouter.post('/:id/panic', async (req: Request, res: Response) => {
 })
 
 vehicleRouter.delete('/:id', async (req: Request, res: Response) => {
-  const { deleted } = await deleteVehicleUseCase.execute(String(req.params.id))
+  const vehicle_id = String(req.params.id)
+  const { deleted } = await deleteVehicleUseCase.execute(vehicle_id)
   if (!deleted) {
     res.status(404).json({ error: 'Vehicle not found' })
     return
   }
+  emitVehicleDeleted(vehicle_id)
   res.json({ message: 'Vehicle deleted successfully' })
 })

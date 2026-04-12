@@ -242,3 +242,56 @@
   color: var(--color-text-muted);
 }
 
+.vehicle-card__delete {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  line-height: 1;
+  transition: background 0.15s, color 0.15s;
+}
+.vehicle-card__delete:hover {
+  background: rgba(239,68,68,0.15);
+  color: var(--color-danger);
+}
+
+.vehicle-card__confirm {
+  margin-top: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.vehicle-card__confirm-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.vehicle-card__confirm-yes,
+.vehicle-card__confirm-no {
+  flex: 1;
+  padding: 0.25rem 0;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.vehicle-card__confirm-yes {
+  background: var(--color-danger);
+  color: #fff;
+}
+.vehicle-card__confirm-yes:hover { opacity: 0.85; }
+.vehicle-card__confirm-no {
+  background: var(--color-border);
+  color: var(--color-text);
+}
+.vehicle-card__confirm-no:hover { opacity: 0.75; }
+

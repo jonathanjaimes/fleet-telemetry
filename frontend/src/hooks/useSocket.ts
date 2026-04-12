@@ -10,6 +10,7 @@ let socket: Socket | null = null
 export function useSocket() {
   const updateVehicle    = useFleetStore((s) => s.updateVehicle)
   const setVehicleStatus = useFleetStore((s) => s.setVehicleStatus)
+  const removeVehicle    = useFleetStore((s) => s.removeVehicle)
   const addAlert         = useFleetStore((s) => s.addAlert)
   const setConnected     = useFleetStore((s) => s.setConnected)
 
@@ -32,9 +33,13 @@ export function useSocket() {
       setVehicleStatus(alert.vehicle_id, 'alert')
     })
 
+    socket.on('vehicle:deleted', (data: { vehicle_id: string }) => {
+      removeVehicle(data.vehicle_id)
+    })
+
     return () => {
       socket?.disconnect()
       socket = null
     }
-  }, [updateVehicle, setVehicleStatus, addAlert, setConnected])
+  }, [updateVehicle, setVehicleStatus, removeVehicle, addAlert, setConnected])
 }
