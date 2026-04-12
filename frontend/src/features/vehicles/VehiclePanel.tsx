@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Truck, Bell, AlertTriangle, Clock, CheckCircle, CircleAlert } from 'lucide-react'
 import { useFleetStore } from '../../store/useFleetStore'
+import { useAuthStore } from '../../store/useAuthStore'
 import { VehicleCard } from './VehicleCard'
 import { ALERT_CONFIG } from '../../types'
 import type { AlertType } from '../../types'
@@ -27,6 +28,7 @@ export function VehiclePanel() {
   const selectVehicle = useFleetStore((s) => s.selectVehicle)
   const isConnected   = useFleetStore((s) => s.isConnected)
   const resolveAlert  = useFleetStore((s) => s.resolveAlert)
+  const user          = useAuthStore((s) => s.user)
 
   const vehicleList = Object.values(vehicles)
   const alertCount  = vehicleList.filter((v) => v.status === 'alert').length
@@ -39,7 +41,10 @@ export function VehiclePanel() {
   }
 
   const handleResolve = async (id: string) => {
-    const res = await fetch(`${BACKEND}/api/alerts/${id}/resolve`, { method: 'PATCH' })
+    const res = await fetch(`${BACKEND}/api/alerts/${id}/resolve`, {
+      method: 'PATCH',
+      headers: { 'x-user-id': user?.unique_id ?? '' },
+    })
     if (!res.ok) return
     const alert = alerts.find((a) => a.id === id)
     if (alert) resolveAlert(id, alert.vehicle_id, alert.type ?? '')

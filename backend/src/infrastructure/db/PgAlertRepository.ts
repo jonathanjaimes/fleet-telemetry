@@ -37,6 +37,16 @@ export class PgAlertRepository implements IAlertRepository {
     return result.rows.map(rowToAlert)
   }
 
+  async findByVehicleIds(vehicleIds: string[]): Promise<Alert[]> {
+    if (vehicleIds.length === 0) return []
+    const placeholders = vehicleIds.map((_, i) => `$${i + 1}`).join(', ')
+    const result = await pgPool.query(
+      `SELECT * FROM alerts WHERE vehicle_id IN (${placeholders}) ORDER BY timestamp DESC LIMIT 100`,
+      vehicleIds
+    )
+    return result.rows.map(rowToAlert)
+  }
+
   async resolve(id: string): Promise<void> {
     await pgPool.query(
       `UPDATE alerts SET resolved = TRUE WHERE id = $1`,

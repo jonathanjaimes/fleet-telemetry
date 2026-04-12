@@ -6,6 +6,7 @@ interface FleetState {
   alerts: Alert[]
   selectedVehicleId: string | null
   isConnected: boolean
+  managedVehicleIds: string[] | null  // null = superadmin (ve todo)
 
   updateVehicle: (reading: GpsReading) => void
   setVehicleStatus: (vehicle_id: string, status: Vehicle['status']) => void
@@ -13,6 +14,7 @@ interface FleetState {
   addAlert: (alert: Alert) => void
   resolveAlert: (alert_id: string, vehicle_id: string, alert_type: string) => void
   loadAlerts: (alerts: Alert[]) => void
+  setManagedVehicleIds: (ids: string[] | null) => void
   selectVehicle: (id: string | null) => void
   setConnected: (connected: boolean) => void
 }
@@ -24,6 +26,7 @@ export const useFleetStore = create<FleetState>((set) => ({
   alerts: [],
   selectedVehicleId: null,
   isConnected: false,
+  managedVehicleIds: null,
 
   updateVehicle: (reading) =>
     set((state) => {
@@ -107,6 +110,8 @@ export const useFleetStore = create<FleetState>((set) => ({
     }),
 
   loadAlerts: (alerts) => set({ alerts }),
+
+  setManagedVehicleIds: (ids) => set({ managedVehicleIds: ids }),
 
   selectVehicle: (id) => set({ selectedVehicleId: id }),
 

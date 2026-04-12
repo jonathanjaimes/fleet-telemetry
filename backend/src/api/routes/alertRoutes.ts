@@ -1,20 +1,37 @@
 import { Router } from 'express'
 import { PgAlertRepository } from '../../infrastructure/db/PgAlertRepository'
 import { PgVehicleRepository } from '../../infrastructure/db/PgVehicleRepository'
+import { PgUserRepository } from '../../infrastructure/db/PgUserRepository'
 import { emitAlertResolved, emitVehicleStatus } from '../../infrastructure/websocket/socketServer'
 
 export const alertRouter = Router()
 
 const alertRepo   = new PgAlertRepository()
 const vehicleRepo = new PgVehicleRepository()
+const userRepo    = new PgUserRepository()
 
-alertRouter.get('/', async (_req, res) => {
+async function resolveUserAlerts(uniqueId: string) {
+  const user = await userRepo.findByUniqueId(uniqueId)
+  if (!user) return null
+  if (user.role === 'superadmin') {
+    return { user, alerts: await alertRepo.findAll() }
+  }
+  if (user.role === 'fleet') {
+    const drivers = await userRepo.findByCreator(user.id)
+    const driverIds = drivers.map((d) => d.unique_id)
+    return { user, alerts: await alertRepo.findByVehicleIds(driverIds), driverIds }
+  }
+  return null
+}
+
+alertRouter.get('/', async (req, res) => {
+  const uniqueId = req.headers['x-user-id'] as string
+  if (!uniqueId) return res.status(401).json({ error: 'No autorizado' })
+
   try {
-    const alerts = await alertRepo.findAll()
-    res.json(alerts.map((a) => ({
-      ...a,
-      timestamp: a.timestamp.toISOString(),
-    })))
+    const result = await resolveUserAlerts(uniqueId)
+    if (!result) return res.status(403).json({ error: 'Acceso no permitido' })
+    res.json(result.alerts.map((a) => ({ ...a, timestamp: a.timestamp.toISOString() })))
   } catch (err) {
     console.error('[Alerts] Error fetching alerts:', err)
     res.status(500).json({ error: 'Error al obtener alertas' })
@@ -22,16 +39,20 @@ alertRouter.get('/', async (_req, res) => {
 })
 
 alertRouter.patch('/:id/resolve', async (req, res) => {
+  const uniqueId = req.headers['x-user-id'] as string
+  if (!uniqueId) return res.status(401).json({ error: 'No autorizado' })
+
   const { id } = req.params
   try {
-    const alerts = await alertRepo.findAll()
-    const alert = alerts.find((a) => a.id === id)
-    if (!alert) return res.status(404).json({ error: 'Alerta no encontrada' })
+    const result = await resolveUserAlerts(uniqueId)
+    if (!result) return res.status(403).json({ error: 'Acceso no permitido' })
+
+    const alert = result.alerts.find((a) => a.id === id)
+    if (!alert) return res.status(404).json({ error: 'Alerta no encontrada o sin acceso' })
     if (alert.resolved) return res.status(400).json({ error: 'La alerta ya fue resuelta' })
 
     await alertRepo.resolve(id)
 
-    // Si la alerta era por ausencia de movimiento, el vehículo pasa a inactivo
     if (alert.type === 'VEHICLE_STOPPED') {
       const vehicle = await vehicleRepo.findById(alert.vehicle_id)
       if (vehicle && vehicle.status === 'alert') {
