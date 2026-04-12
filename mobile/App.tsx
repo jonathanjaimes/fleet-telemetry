@@ -235,9 +235,13 @@ function TelemetryScreen({ driverId, onLogout }: { driverId: string; onLogout: (
             {trip.isActive ? 'Finalizar viaje' : 'Iniciar viaje'}
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.panicBtn} onPress={handlePanic}>
-          <Ionicons name="warning-outline" size={22} color="#fff" />
-          <Text style={styles.panicBtnText}>PÁNICO</Text>
+        <TouchableOpacity
+          style={[styles.panicBtn, !trip.isActive && styles.panicBtnDisabled]}
+          onPress={handlePanic}
+          disabled={!trip.isActive}
+        >
+          <Ionicons name="warning-outline" size={22} color={trip.isActive ? '#fff' : '#94a3b8'} />
+          <Text style={[styles.panicBtnText, !trip.isActive && styles.panicBtnTextDisabled]}>PÁNICO</Text>
         </TouchableOpacity>
       </View>
 
@@ -383,8 +387,10 @@ const styles = StyleSheet.create({
   tripBtnStart:   { backgroundColor: '#22c55e' },
   tripBtnStop:    { backgroundColor: '#2a2d3e', borderWidth: 1, borderColor: '#3b82f6' },
   tripBtnText:    { color: '#fff', fontSize: 16, fontWeight: '700' },
-  panicBtn:       { backgroundColor: '#ef4444', borderRadius: 12, padding: 20, alignItems: 'center', borderWidth: 2, borderColor: '#fca5a5', flexDirection: 'row', justifyContent: 'center', gap: 10 },
-  panicBtnText:   { color: '#fff', fontSize: 18, fontWeight: '900', letterSpacing: 1 },
+  panicBtn:         { backgroundColor: '#ef4444', borderRadius: 12, padding: 20, alignItems: 'center', borderWidth: 2, borderColor: '#fca5a5', flexDirection: 'row', justifyContent: 'center', gap: 10 },
+  panicBtnDisabled: { backgroundColor: '#1e293b', borderColor: '#334155' },
+  panicBtnText:     { color: '#fff', fontSize: 18, fontWeight: '900', letterSpacing: 1 },
+  panicBtnTextDisabled: { color: '#94a3b8' },
 
   alertsSection:  { flex: 1, margin: 16, marginTop: 12 },
   alertsTitle:    { color: '#64748b', fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 },
