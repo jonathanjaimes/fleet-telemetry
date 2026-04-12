@@ -36,7 +36,7 @@ routeRouter.get('/', async (req: Request, res: Response) => {
 
 // GET /api/routes/:route_id/points
 routeRouter.get('/:route_id/points', async (req: Request, res: Response) => {
-  const { route_id } = req.params
+  const route_id = String(req.params.route_id)
 
   try {
     const route = await routeRepo.findById(route_id)
