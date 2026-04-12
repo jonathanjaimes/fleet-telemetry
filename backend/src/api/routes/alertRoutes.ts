@@ -4,7 +4,7 @@ import { PgVehicleRepository } from '../../infrastructure/db/PgVehicleRepository
 import { PgUserRepository } from '../../infrastructure/db/PgUserRepository'
 import { PgRouteRepository } from '../../infrastructure/db/PgRouteRepository'
 import { emitAlertResolved, emitVehicleStatus } from '../../infrastructure/websocket/socketServer'
-import { setManualStop } from '../../infrastructure/cache/redisClient'
+import { setManualStop, clearStoppedSince } from '../../infrastructure/cache/redisClient'
 
 export const alertRouter = Router()
 
@@ -70,6 +70,7 @@ alertRouter.patch('/:id/resolve', async (req, res) => {
           // El operador decidió finalizar el viaje explícitamente
           await vehicleRepo.updateStatus(alert.vehicle_id, 'stopped')
           await setManualStop(alert.vehicle_id)
+          await clearStoppedSince(alert.vehicle_id)
           await routeRepo.endRoute(alert.vehicle_id)
           emitVehicleStatus(alert.vehicle_id, 'stopped')
         } else {
@@ -78,6 +79,9 @@ alertRouter.patch('/:id/resolve', async (req, res) => {
           emitVehicleStatus(alert.vehicle_id, 'idle')
           if (alert.type === 'VEHICLE_STOPPED') {
             await routeRepo.endRoute(alert.vehicle_id)
+            // Reinicia el contador de inactividad para dar una ventana de 2 min
+            // antes de que se pueda generar otra alerta de ausencia de movimiento
+            await clearStoppedSince(alert.vehicle_id)
           }
         }
       }
