@@ -5,6 +5,7 @@ import {
   KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, Modal,
 } from 'react-native'
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
+import { Ionicons, MaterialIcons } from '@expo/vector-icons'
 import { useTelemetry } from './src/hooks/useTelemetry'
 import { loginDriver } from './src/services/api'
 import { saveSession, loadSession, clearSession } from './src/services/authStorage'
@@ -159,9 +160,16 @@ function TelemetryScreen({ driverId, onLogout }: { driverId: string; onLogout: (
       <StatusBar barStyle="light-content" backgroundColor="#0f1117" />
 
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>🚛 Fleet Telemetría</Text>
+        <View style={styles.headerLeft}>
+          <MaterialIcons name="local-shipping" size={22} color="#e2e8f0" />
+          <Text style={styles.headerTitle}>Fleet Telemetría</Text>
+        </View>
         <View style={styles.statusBadge}>
-          <Text style={[styles.statusDot, { color: cfg.color }]}>{cfg.dot}</Text>
+          <Ionicons
+            name={status === 'sending' ? 'radio-button-on' : status === 'connected' ? 'ellipse' : 'ellipse-outline'}
+            size={10}
+            color={cfg.color}
+          />
           <Text style={[styles.statusLabel, { color: cfg.color }]}>{cfg.label}</Text>
         </View>
       </View>
@@ -170,7 +178,8 @@ function TelemetryScreen({ driverId, onLogout }: { driverId: string; onLogout: (
         <View style={styles.cardHeader}>
           <Text style={styles.cardTitle}>Viaje actual</Text>
           <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-            <Text style={styles.logoutBtnText}>⏏ Cerrar sesión</Text>
+            <Ionicons name="log-out-outline" size={14} color="#94a3b8" />
+            <Text style={styles.logoutBtnText}>Cerrar sesión</Text>
           </TouchableOpacity>
         </View>
         <View style={styles.infoRow}>
@@ -206,12 +215,18 @@ function TelemetryScreen({ driverId, onLogout }: { driverId: string; onLogout: (
           style={[styles.tripBtn, trip.isActive ? styles.tripBtnStop : styles.tripBtnStart]}
           onPress={trip.isActive ? stopTrip : startTrip}
         >
+          <Ionicons
+            name={trip.isActive ? 'stop-circle-outline' : 'play-circle-outline'}
+            size={22}
+            color="#fff"
+          />
           <Text style={styles.tripBtnText}>
-            {trip.isActive ? '⏹  Finalizar viaje' : '▶  Iniciar viaje'}
+            {trip.isActive ? 'Finalizar viaje' : 'Iniciar viaje'}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.panicBtn} onPress={handlePanic}>
-          <Text style={styles.panicBtnText}>🚨  PÁNICO</Text>
+          <Ionicons name="warning-outline" size={22} color="#fff" />
+          <Text style={styles.panicBtnText}>PÁNICO</Text>
         </TouchableOpacity>
       </View>
 
@@ -229,7 +244,6 @@ function TelemetryScreen({ driverId, onLogout }: { driverId: string; onLogout: (
       <Modal visible={logoutModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={[styles.modalBox, styles.logoutModalBox]}>
-            <Text style={styles.logoutModalIcon}>⏏</Text>
             <Text style={styles.modalTitle}>Cerrar sesión</Text>
             <Text style={styles.logoutModalSubtitle}>
               ¿Seguro que deseas cerrar sesión?{'\n'}
@@ -337,13 +351,13 @@ const styles = StyleSheet.create({
   loginBtnText:   { color: '#fff', fontSize: 16, fontWeight: '700' },
 
   header:         { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#2a2d3e' },
+  headerLeft:     { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerTitle:    { color: '#e2e8f0', fontSize: 16, fontWeight: '700' },
   statusBadge:    { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  statusDot:      { fontSize: 10 },
   statusLabel:    { fontSize: 12, fontWeight: '600' },
 
   cardHeader:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  logoutBtn:      { backgroundColor: '#1e293b', borderWidth: 1, borderColor: '#334155', borderRadius: 8, paddingVertical: 4, paddingHorizontal: 10 },
+  logoutBtn:      { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#1e293b', borderWidth: 1, borderColor: '#334155', borderRadius: 8, paddingVertical: 4, paddingHorizontal: 10 },
   logoutBtnText:  { color: '#94a3b8', fontSize: 12, fontWeight: '600' },
 
   card:           { margin: 16, backgroundColor: '#1a1d27', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#2a2d3e' },
@@ -353,11 +367,11 @@ const styles = StyleSheet.create({
   infoValue:      { color: '#e2e8f0', fontSize: 14, fontWeight: '600' },
 
   controls:       { paddingHorizontal: 16, gap: 12 },
-  tripBtn:        { borderRadius: 12, padding: 16, alignItems: 'center' },
+  tripBtn:        { borderRadius: 12, padding: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10 },
   tripBtnStart:   { backgroundColor: '#22c55e' },
   tripBtnStop:    { backgroundColor: '#2a2d3e', borderWidth: 1, borderColor: '#3b82f6' },
   tripBtnText:    { color: '#fff', fontSize: 16, fontWeight: '700' },
-  panicBtn:       { backgroundColor: '#ef4444', borderRadius: 12, padding: 20, alignItems: 'center', borderWidth: 2, borderColor: '#fca5a5' },
+  panicBtn:       { backgroundColor: '#ef4444', borderRadius: 12, padding: 20, alignItems: 'center', borderWidth: 2, borderColor: '#fca5a5', flexDirection: 'row', justifyContent: 'center', gap: 10 },
   panicBtnText:   { color: '#fff', fontSize: 18, fontWeight: '900', letterSpacing: 1 },
 
   alertsSection:  { flex: 1, margin: 16, marginTop: 12 },
@@ -372,7 +386,6 @@ const styles = StyleSheet.create({
 
   modalOverlay:   { flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'flex-end' },
   logoutModalBox:       { alignItems: 'center', paddingVertical: 32 },
-  logoutModalIcon:      { fontSize: 40, marginBottom: 8 },
   logoutModalSubtitle:  { color: '#94a3b8', fontSize: 14, textAlign: 'center', marginBottom: 24, lineHeight: 22 },
   logoutModalId:        { color: '#60a5fa', fontWeight: '700' },
   logoutConfirmBtn:     { width: '100%', backgroundColor: '#ef4444', borderRadius: 12, padding: 16, alignItems: 'center', marginBottom: 4 },
