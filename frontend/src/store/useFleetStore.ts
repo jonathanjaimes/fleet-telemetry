@@ -45,6 +45,8 @@ export const useFleetStore = create<FleetState>((set) => ({
             lng: reading.lng,
             lastSeen: reading.timestamp,
             route,
+            lastAlertType:   existing?.lastAlertType,
+            alertChipExpiry: existing?.alertChipExpiry,
           },
         },
       }
