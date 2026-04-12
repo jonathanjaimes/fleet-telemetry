@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid'
 import type { GpsReading } from '../../domain/entities/GpsReading'
 import { buildDuplicateKey } from '../../domain/entities/GpsReading'
-import { isVehicleStopped, STOPPED_THRESHOLD_MS } from '../../domain/entities/Vehicle'
+import { isSamePosition, STOPPED_THRESHOLD_MS, ALERT_THRESHOLD_MS } from '../../domain/entities/Vehicle'
 import type { IGpsRepository } from '../../domain/repositories/IGpsRepository'
 import type { IVehicleRepository } from '../../domain/repositories/IVehicleRepository'
 import type { IAlertRepository } from '../../domain/repositories/IAlertRepository'
@@ -54,40 +54,43 @@ export class IngestGpsUseCase {
     }
 
     if (existing) {
-      const samePosition = isVehicleStopped(existing, reading, STOPPED_THRESHOLD_MS)
-
-      if (samePosition) {
-        // El vehículo sigue en la misma posición:
-        // usamos stopped_since en Redis para medir tiempo real continuo,
-        // evitando falsos positivos por gaps de conectividad o app en background.
+      if (isSamePosition(existing, reading)) {
+        // Mismo lugar: registrar cuándo empezó la quietud (si no está registrado)
         let stoppedSince = await getStoppedSince(reading.vehicle_id)
         if (!stoppedSince) {
           stoppedSince = reading.timestamp
           await setStoppedSince(reading.vehicle_id, stoppedSince)
         }
 
-        const continuousStoppedMs = reading.timestamp.getTime() - stoppedSince.getTime()
+        const quietMs = reading.timestamp.getTime() - stoppedSince.getTime()
 
-        if (continuousStoppedMs >= STOPPED_THRESHOLD_MS) {
-          newStatus = existing.status === 'alert' ? 'alert' : 'stopped'
-
-          if (existing.status !== 'alert' && existing.status !== 'stopped') {
+        if (quietMs >= ALERT_THRESHOLD_MS) {
+          // Lleva más de 2 min quieto sin finalizar el viaje → alerta
+          if (existing.status !== 'alert') {
+            const lastMovement = stoppedSince.toLocaleString('es-CO', {
+              day: '2-digit', month: '2-digit', year: 'numeric',
+              hour: '2-digit', minute: '2-digit', second: '2-digit',
+            })
             const alert = {
               id: uuidv4(),
               vehicle_id: reading.vehicle_id,
               type: 'VEHICLE_STOPPED' as const,
-              message: `Vehículo detenido por más de ${Math.round(continuousStoppedMs / 1000)} segundos`,
+              message: `Vehículo sin movimiento desde las ${lastMovement}`,
               timestamp: reading.timestamp,
             }
             await this.alertRepo.save(alert)
-            newStatus = 'alert'
             emitAlert(alert)
           }
+          newStatus = 'alert'
+        } else if (quietMs >= STOPPED_THRESHOLD_MS) {
+          // Entre 30s y 2min quieto → estado stopped, sin alerta aún
+          newStatus = existing.status === 'alert' ? 'alert' : 'stopped'
         } else {
+          // Menos de 30s → mantener estado actual
           newStatus = existing.status === 'alert' ? 'alert' : existing.status
         }
       } else {
-        // El vehículo se movió: resetear el contador
+        // Se movió: resetear contador y volver a moving
         await clearStoppedSince(reading.vehicle_id)
         newStatus = existing.status === 'alert' ? 'alert' : 'moving'
       }
