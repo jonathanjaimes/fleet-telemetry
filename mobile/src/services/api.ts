@@ -1,10 +1,16 @@
 import axios from 'axios'
+import Constants from 'expo-constants'
 
-// En desarrollo apunta al backend local.
-// En producción se reemplazaría con la URL real del servidor.
-// URL pública temporal via Cloudflare Tunnel para pruebas con dispositivo físico.
-// En producción se reemplaza con la URL real del servidor.
-const BACKEND_URL = 'https://causes-bone-carried-href.trycloudflare.com'
+// Detecta automáticamente la IP de la máquina donde corre Expo en desarrollo.
+// Así el jurado no necesita configurar nada manualmente.
+// En producción apuntaría a la URL real del servidor en la nube.
+function getBackendUrl(): string {
+  const expoHost = Constants.expoConfig?.hostUri?.split(':')[0]
+  if (expoHost) return `http://${expoHost}:3001`
+  return 'http://localhost:3001'
+}
+
+const BACKEND_URL = getBackendUrl()
 
 const client = axios.create({
   baseURL: BACKEND_URL,
