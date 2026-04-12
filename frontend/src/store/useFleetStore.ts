@@ -109,7 +109,31 @@ export const useFleetStore = create<FleetState>((set) => ({
       return { alerts, vehicles }
     }),
 
-  loadAlerts: (alerts) => set({ alerts }),
+  loadAlerts: (fetched) =>
+    set((state) => {
+      // Merge: alertas del historial + las que llegaron en tiempo real y no están en DB aún
+      const fetchedIds = new Set(fetched.map((a) => a.id))
+      const realtimeOnly = state.alerts.filter((a) => !fetchedIds.has(a.id))
+      const merged = [...fetched, ...realtimeOnly].slice(0, 100)
+
+      // Actualizar chip de vehículos para alertas no resueltas cargadas del historial
+      const vehicles = { ...state.vehicles }
+      for (const alert of fetched) {
+        if (!alert.resolved && alert.type && vehicles[alert.vehicle_id]) {
+          const current = vehicles[alert.vehicle_id]
+          // Solo setear chip si no hay uno activo más reciente
+          if (!current.alertChipExpiry || Date.now() < current.alertChipExpiry) {
+            vehicles[alert.vehicle_id] = {
+              ...current,
+              lastAlertType:   alert.type,
+              alertChipExpiry: Date.now() + 10_000,
+            }
+          }
+        }
+      }
+
+      return { alerts: merged, vehicles }
+    }),
 
   setManagedVehicleIds: (ids) => set({ managedVehicleIds: ids }),
 

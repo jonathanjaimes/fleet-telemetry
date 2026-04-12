@@ -41,6 +41,7 @@ export function emitAlert(alert: Alert): void {
     type: alert.type,
     message: alert.message,
     timestamp: alert.timestamp.toISOString(),
+    resolved: false,
   })
 }
 
