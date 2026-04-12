@@ -358,7 +358,7 @@
   background: var(--color-surface);
   z-index: 1;
 }
-.alerts-section-header--resolved { color: var(--color-success); opacity: 0.7; }
+.alerts-section-header--resolved { color: var(--color-success); }
 
 .alerts-section-count {
   margin-left: auto;
