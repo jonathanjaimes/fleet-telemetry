@@ -38,7 +38,7 @@ export const useFleetStore = create<FleetState>((set) => ({
           [reading.vehicle_id]: {
             id: reading.vehicle_id,
             label: reading.vehicle_id.startsWith('SIM-')
-              ? `🤖 ${reading.vehicle_id.replace('SIM-', '')}`
+              ? `[SIM] ${reading.vehicle_id.replace('SIM-', '')}`
               : reading.vehicle_id,
             status: existing?.status ?? 'moving',
             lat: reading.lat,
