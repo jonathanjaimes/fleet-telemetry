@@ -1,4 +1,5 @@
 import { Pool } from 'pg'
+import { v4 as uuidv4 } from 'uuid'
 
 export const pgPool = new Pool({
   host:     process.env.DB_HOST     ?? 'localhost',
@@ -37,5 +38,24 @@ export async function runMigrations(): Promise<void> {
 
     CREATE INDEX IF NOT EXISTS idx_gps_vehicle_time
       ON gps_readings(vehicle_id, timestamp DESC);
+
+    CREATE TABLE IF NOT EXISTS users (
+      id          UUID PRIMARY KEY,
+      unique_id   VARCHAR(30) UNIQUE NOT NULL,
+      role        VARCHAR(20) NOT NULL,
+      created_by  UUID REFERENCES users(id),
+      created_at  TIMESTAMPTZ DEFAULT NOW()
+    );
   `)
+
+  // Seed superadmin si no existe
+  const existing = await pgPool.query("SELECT 1 FROM users WHERE role = 'superadmin'")
+  if (existing.rows.length === 0) {
+    await pgPool.query(
+      `INSERT INTO users (id, unique_id, role, created_by)
+       VALUES ($1, 'SUPER-001', 'superadmin', NULL)`,
+      [uuidv4()]
+    )
+    console.log('[DB] Superadmin creado — unique_id: SUPER-001')
+  }
 }

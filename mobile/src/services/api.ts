@@ -68,6 +68,17 @@ export async function sendPanicAlert(vehicle_id: string, lat: number, lng: numbe
   }
 }
 
+export async function loginDriver(unique_id: string): Promise<'ok' | 'invalid_role' | 'error'> {
+  try {
+    const res = await client.post('/api/auth/login', { unique_id })
+    if (res.data.role !== 'driver') return 'invalid_role'
+    return 'ok'
+  } catch (e: unknown) {
+    if (axios.isAxiosError(e) && e.response?.status === 401) return 'invalid_role'
+    return 'error'
+  }
+}
+
 export async function checkBackendHealth(): Promise<boolean> {
   try {
     const res = await client.get('/health')

@@ -1,15 +1,17 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
-  View, Text, TouchableOpacity, ScrollView,
-  StyleSheet, SafeAreaView, StatusBar, Alert,
+  View, Text, TextInput, TouchableOpacity, ScrollView,
+  StyleSheet, SafeAreaView, StatusBar, Alert, ActivityIndicator,
 } from 'react-native'
 import { useTelemetry } from './src/hooks/useTelemetry'
+import { loginDriver } from './src/services/api'
+import { saveSession, loadSession, clearSession } from './src/services/authStorage'
 import type { LocalAlert } from './src/types'
 
 const STATUS_CONFIG = {
-  connected:    { label: 'Conectado',     color: '#22c55e', dot: '●' },
-  disconnected: { label: 'Desconectado',  color: '#ef4444', dot: '○' },
-  sending:      { label: 'Enviando...',   color: '#f59e0b', dot: '●' },
+  connected:    { label: 'Conectado',    color: '#22c55e', dot: '●' },
+  disconnected: { label: 'Desconectado', color: '#ef4444', dot: '○' },
+  sending:      { label: 'Enviando...',  color: '#f59e0b', dot: '●' },
 }
 
 function formatTime(iso: string): string {
@@ -37,25 +39,78 @@ function AlertItem({ alert }: { alert: LocalAlert }) {
   )
 }
 
-export default function App() {
-  const { status, location, trip, alerts, hasPermission, startTrip, stopTrip, triggerPanic } = useTelemetry()
+// ─── Pantalla de login ────────────────────────────────────────────────────────
+function LoginScreen({ onLogin }: { onLogin: (id: string) => void }) {
+  const [uniqueId, setUniqueId] = useState('')
+  const [loading, setLoading]   = useState(false)
+  const [error, setError]       = useState('')
+
+  const handleLogin = async () => {
+    const id = uniqueId.trim().toUpperCase()
+    if (!id) return
+    setError('')
+    setLoading(true)
+    const result = await loginDriver(id)
+    setLoading(false)
+    if (result === 'ok') {
+      await saveSession({ unique_id: id })
+      onLogin(id)
+    } else if (result === 'invalid_role') {
+      setError('ID no reconocido o no es un conductor')
+    } else {
+      setError('No se pudo conectar al servidor')
+    }
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#0f1117" />
+      <View style={styles.loginBox}>
+        <Text style={styles.loginLogo}>🚛</Text>
+        <Text style={styles.loginTitle}>Fleet Telemetría</Text>
+        <Text style={styles.loginSubtitle}>Ingresa tu ID de conductor</Text>
+
+        <TextInput
+          style={styles.loginInput}
+          value={uniqueId}
+          onChangeText={(t) => setUniqueId(t.toUpperCase())}
+          placeholder="Ej: DRV-AB3C9"
+          placeholderTextColor="#64748b"
+          autoCapitalize="characters"
+          autoCorrect={false}
+        />
+        {error ? <Text style={styles.loginError}>{error}</Text> : null}
+        <TouchableOpacity
+          style={[styles.loginBtn, (!uniqueId.trim() || loading) && styles.loginBtnDisabled]}
+          onPress={handleLogin}
+          disabled={!uniqueId.trim() || loading}
+        >
+          {loading
+            ? <ActivityIndicator color="#fff" />
+            : <Text style={styles.loginBtnText}>Ingresar</Text>
+          }
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  )
+}
+
+// ─── Pantalla principal ───────────────────────────────────────────────────────
+function TelemetryScreen({ driverId, onLogout }: { driverId: string; onLogout: () => void }) {
+  const { status, location, trip, alerts, hasPermission, startTrip, stopTrip, triggerPanic } =
+    useTelemetry(driverId)
   const [, forceRender] = useState(0)
   const cfg = STATUS_CONFIG[status]
 
-  if (hasPermission === null) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <Text style={styles.loadingText}>Solicitando permisos GPS...</Text>
-      </SafeAreaView>
-    )
-  }
-
-  if (hasPermission === false) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <Text style={styles.errorText}>⚠️ Se requiere permiso de ubicación para esta app.</Text>
-      </SafeAreaView>
-    )
+  const handleLogout = () => {
+    if (trip.isActive) {
+      Alert.alert('Viaje activo', 'Finaliza el viaje antes de cerrar sesión.')
+      return
+    }
+    Alert.alert('Cerrar sesión', '¿Deseas salir?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Salir', style: 'destructive', onPress: onLogout },
+    ])
   }
 
   const handlePanic = () => {
@@ -65,20 +120,38 @@ export default function App() {
     ])
   }
 
+  if (hasPermission === null) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.loadingText}>Solicitando permisos GPS...</Text>
+      </SafeAreaView>
+    )
+  }
+  if (hasPermission === false) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.errorText}>⚠️ Se requiere permiso de ubicación para esta app.</Text>
+      </SafeAreaView>
+    )
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#0f1117" />
 
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>🚛 Fleet Telemetría</Text>
-        <View style={styles.statusBadge}>
-          <Text style={[styles.statusDot, { color: cfg.color }]}>{cfg.dot}</Text>
-          <Text style={[styles.statusLabel, { color: cfg.color }]}>{cfg.label}</Text>
+        <View style={styles.headerRight}>
+          <View style={styles.statusBadge}>
+            <Text style={[styles.statusDot, { color: cfg.color }]}>{cfg.dot}</Text>
+            <Text style={[styles.statusLabel, { color: cfg.color }]}>{cfg.label}</Text>
+          </View>
+          <TouchableOpacity onPress={handleLogout}>
+            <Text style={styles.logoutBtn}>Salir</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
-      {/* Info del viaje */}
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Viaje actual</Text>
         <View style={styles.infoRow}>
@@ -88,8 +161,8 @@ export default function App() {
           </Text>
         </View>
         <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Vehículo</Text>
-          <Text style={styles.infoValue}>{trip.vehicleId}</Text>
+          <Text style={styles.infoLabel}>Conductor</Text>
+          <Text style={styles.infoValue}>{driverId}</Text>
         </View>
         {trip.startedAt && (
           <View style={styles.infoRow}>
@@ -109,7 +182,6 @@ export default function App() {
         )}
       </View>
 
-      {/* Controles */}
       <View style={styles.controls}>
         <TouchableOpacity
           style={[styles.tripBtn, trip.isActive ? styles.tripBtnStop : styles.tripBtnStart]}
@@ -119,13 +191,11 @@ export default function App() {
             {trip.isActive ? '⏹  Finalizar viaje' : '▶  Iniciar viaje'}
           </Text>
         </TouchableOpacity>
-
         <TouchableOpacity style={styles.panicBtn} onPress={handlePanic}>
           <Text style={styles.panicBtnText}>🚨  PÁNICO</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Historial de alertas */}
       <View style={styles.alertsSection}>
         <Text style={styles.alertsTitle}>Alertas locales ({alerts.length})</Text>
         <ScrollView style={styles.alertsList} showsVerticalScrollIndicator={false}>
@@ -139,16 +209,57 @@ export default function App() {
   )
 }
 
+// ─── Root ─────────────────────────────────────────────────────────────────────
+export default function App() {
+  const [driverId, setDriverId] = useState<string | null>(null)
+  const [checking, setChecking] = useState(true)
+
+  useEffect(() => {
+    loadSession().then((s) => {
+      if (s) setDriverId(s.unique_id)
+      setChecking(false)
+    })
+  }, [])
+
+  const handleLogout = async () => {
+    await clearSession()
+    setDriverId(null)
+  }
+
+  if (checking) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ActivityIndicator color="#3b82f6" style={{ marginTop: 80 }} />
+      </SafeAreaView>
+    )
+  }
+
+  if (!driverId) return <LoginScreen onLogin={setDriverId} />
+  return <TelemetryScreen driverId={driverId} onLogout={handleLogout} />
+}
+
 const styles = StyleSheet.create({
   container:      { flex: 1, backgroundColor: '#0f1117' },
   loadingText:    { color: '#64748b', textAlign: 'center', marginTop: 40, fontSize: 16 },
   errorText:      { color: '#ef4444', textAlign: 'center', marginTop: 40, fontSize: 16, padding: 20 },
 
+  loginBox:       { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
+  loginLogo:      { fontSize: 56, marginBottom: 8 },
+  loginTitle:     { color: '#e2e8f0', fontSize: 24, fontWeight: '700', marginBottom: 4 },
+  loginSubtitle:  { color: '#64748b', fontSize: 14, marginBottom: 32 },
+  loginInput:     { width: '100%', backgroundColor: '#1a1d27', borderWidth: 1, borderColor: '#2a2d3e', borderRadius: 10, padding: 16, color: '#e2e8f0', fontSize: 18, fontWeight: '700', textAlign: 'center', letterSpacing: 2, marginBottom: 12 },
+  loginError:     { color: '#ef4444', fontSize: 13, marginBottom: 8, textAlign: 'center' },
+  loginBtn:       { width: '100%', backgroundColor: '#3b82f6', borderRadius: 10, padding: 16, alignItems: 'center' },
+  loginBtnDisabled: { opacity: 0.45 },
+  loginBtnText:   { color: '#fff', fontSize: 16, fontWeight: '700' },
+
   header:         { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#2a2d3e' },
-  headerTitle:    { color: '#e2e8f0', fontSize: 18, fontWeight: '700' },
+  headerTitle:    { color: '#e2e8f0', fontSize: 16, fontWeight: '700' },
+  headerRight:    { flexDirection: 'row', alignItems: 'center', gap: 12 },
   statusBadge:    { flexDirection: 'row', alignItems: 'center', gap: 4 },
   statusDot:      { fontSize: 10 },
   statusLabel:    { fontSize: 12, fontWeight: '600' },
+  logoutBtn:      { color: '#64748b', fontSize: 13 },
 
   card:           { margin: 16, backgroundColor: '#1a1d27', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#2a2d3e' },
   cardTitle:      { color: '#64748b', fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 },
@@ -161,7 +272,6 @@ const styles = StyleSheet.create({
   tripBtnStart:   { backgroundColor: '#22c55e' },
   tripBtnStop:    { backgroundColor: '#2a2d3e', borderWidth: 1, borderColor: '#3b82f6' },
   tripBtnText:    { color: '#fff', fontSize: 16, fontWeight: '700' },
-
   panicBtn:       { backgroundColor: '#ef4444', borderRadius: 12, padding: 20, alignItems: 'center', borderWidth: 2, borderColor: '#fca5a5' },
   panicBtnText:   { color: '#fff', fontSize: 18, fontWeight: '900', letterSpacing: 1 },
 
@@ -169,7 +279,6 @@ const styles = StyleSheet.create({
   alertsTitle:    { color: '#64748b', fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 },
   alertsList:     { flex: 1 },
   noAlerts:       { color: '#64748b', fontSize: 14, textAlign: 'center', marginTop: 16 },
-
   alertItem:      { flexDirection: 'row', backgroundColor: '#1a1d27', borderRadius: 8, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: '#2a2d3e', gap: 10 },
   alertIcon:      { fontSize: 18 },
   alertBody:      { flex: 1 },

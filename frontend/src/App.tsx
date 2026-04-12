@@ -1,28 +1,17 @@
 import './App.css'
-import { VehiclePanel } from './features/vehicles/VehiclePanel'
-import { FleetMap } from './features/map/FleetMap'
-import { useSocket } from './hooks/useSocket'
-import { useFleetStore } from './store/useFleetStore'
+import { useAuthStore } from './store/useAuthStore'
+import { LoginPage }     from './pages/LoginPage'
+import { SuperAdminPage } from './pages/SuperAdminPage'
+import { FleetPage }     from './pages/FleetPage'
 
 function App() {
-  useSocket()
-  const isConnected = useFleetStore((s) => s.isConnected)
+  const user = useAuthStore((s) => s.user)
 
-  return (
-    <div className="app">
-      <header className="app-header">
-        <span>🚛</span>
-        <h1>Fleet Telemetry</h1>
-        <span className={`badge ${isConnected ? 'badge--on' : 'badge--off'}`}>
-          {isConnected ? 'En vivo' : 'Sin conexión'}
-        </span>
-      </header>
-      <div className="app-body">
-        <VehiclePanel />
-        <FleetMap />
-      </div>
-    </div>
-  )
+  if (!user) return <LoginPage />
+
+  if (user.role === 'superadmin') return <SuperAdminPage />
+
+  return <FleetPage />
 }
 
 export default App

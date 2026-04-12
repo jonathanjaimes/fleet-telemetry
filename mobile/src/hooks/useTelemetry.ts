@@ -5,10 +5,10 @@ import { getSocket } from '../services/socket'
 import { saveAlert, getAlerts } from '../services/alertStorage'
 import type { ConnectionStatus, LocalAlert, TripState } from '../types'
 
-const VEHICLE_ID = 'mobile-driver-01'
 const SEND_INTERVAL_MS = 4000
 
-export function useTelemetry() {
+export function useTelemetry(driverId: string) {
+  const VEHICLE_ID = driverId
   const [status, setStatus]           = useState<ConnectionStatus>('disconnected')
   const [location, setLocation]       = useState<{ lat: number; lng: number } | null>(null)
   const [trip, setTrip]               = useState<TripState>({ isActive: false, startedAt: null, vehicleId: VEHICLE_ID })

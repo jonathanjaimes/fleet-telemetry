@@ -2,6 +2,8 @@ import http from 'http'
 import express from 'express'
 import { gpsRouter } from './api/routes/gpsRoutes'
 import { vehicleRouter } from './api/routes/vehicleRoutes'
+import { authRouter } from './api/routes/authRoutes'
+import { userRouter } from './api/routes/userRoutes'
 import { connectRedis } from './infrastructure/cache/redisClient'
 import { runMigrations } from './infrastructure/db/pgClient'
 import { initSocketServer } from './infrastructure/websocket/socketServer'
@@ -19,7 +21,7 @@ async function bootstrap() {
 
   app.use((_req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*')
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-user-id')
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,DELETE,OPTIONS')
     next()
   })
@@ -35,6 +37,8 @@ async function bootstrap() {
   )
   createGpsCircuitBreaker(ingestUseCase)
 
+  app.use('/api/auth', authRouter)
+  app.use('/api/users', userRouter)
   app.use('/api/gps', gpsRouter)
   app.use('/api/vehicles', vehicleRouter)
   app.get('/health', (_req, res) => res.json({ status: 'ok' }))
