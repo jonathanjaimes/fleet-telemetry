@@ -109,75 +109,79 @@ export function VehiclePanel() {
       {activeTab === 'alerts' && (
         <div className="alerts-panel">
 
-          {/* Pendientes */}
-          <div className="alerts-section-header">
-            <CircleAlert size={13} />
-            <span>Por solucionar</span>
-            {pending.length > 0 && (
-              <span className="alerts-section-count alerts-section-count--danger">{pending.length}</span>
+          {/* Pendientes — crece y tiene scroll propio */}
+          <div className="alerts-panel__pending">
+            <div className="alerts-section-header" style={{ paddingLeft: 0, paddingRight: 0 }}>
+              <CircleAlert size={13} />
+              <span>Por solucionar</span>
+              {pending.length > 0 && (
+                <span className="alerts-section-count alerts-section-count--danger">{pending.length}</span>
+              )}
+            </div>
+            {pending.length === 0 ? (
+              <p className="vehicle-panel__empty vehicle-panel__empty--sm">Sin alertas pendientes</p>
+            ) : (
+              <ul className="alerts-list">
+                {pending.map((alert) => (
+                  <li key={alert.id} className="alert-item">
+                    <div className="alert-item__icon">
+                      {alert.type && ALERT_CONFIG[alert.type as AlertType]
+                        ? ALERT_CONFIG[alert.type as AlertType].icon
+                        : <AlertTriangle size={14} />}
+                    </div>
+                    <div className="alert-item__body">
+                      <div className="alert-item__vehicle">{alert.vehicle_id}</div>
+                      <div className="alert-item__message">{alert.message}</div>
+                      <div className="alert-item__time">
+                        <Clock size={11} /> {formatDateTime(alert.timestamp)}
+                      </div>
+                    </div>
+                    <button
+                      className="alert-resolve-btn"
+                      onClick={() => setConfirmingId(alert.id)}
+                      title="Marcar como solucionada"
+                    >
+                      <CheckCircle size={16} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
-          {pending.length === 0 ? (
-            <p className="vehicle-panel__empty vehicle-panel__empty--sm">Sin alertas pendientes</p>
-          ) : (
-            <ul className="alerts-list">
-              {pending.map((alert) => (
-                <li key={alert.id} className="alert-item">
-                  <div className="alert-item__icon">
-                    {alert.type && ALERT_CONFIG[alert.type as AlertType]
-                      ? ALERT_CONFIG[alert.type as AlertType].icon
-                      : <AlertTriangle size={14} />}
-                  </div>
-                  <div className="alert-item__body">
-                    <div className="alert-item__vehicle">{alert.vehicle_id}</div>
-                    <div className="alert-item__message">{alert.message}</div>
-                    <div className="alert-item__time">
-                      <Clock size={11} /> {formatDateTime(alert.timestamp)}
-                    </div>
-                  </div>
-                  <button
-                    className="alert-resolve-btn"
-                    onClick={() => setConfirmingId(alert.id)}
-                    title="Marcar como solucionada"
-                  >
-                    <CheckCircle size={16} />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
 
-          {/* Resueltas */}
-          <div className="alerts-section-header alerts-section-header--resolved">
-            <CheckCircle size={13} />
-            <span>Solucionadas</span>
-            {resolved.length > 0 && (
-              <span className="alerts-section-count">{resolved.length}</span>
+          {/* Solucionadas — fija al fondo, max 38% de altura */}
+          <div className="alerts-panel__resolved">
+            <div className="alerts-section-header alerts-section-header--resolved" style={{ paddingLeft: 0, paddingRight: 0, borderTop: 'none', marginTop: 0 }}>
+              <CheckCircle size={13} />
+              <span>Solucionadas</span>
+              {resolved.length > 0 && (
+                <span className="alerts-section-count">{resolved.length}</span>
+              )}
+            </div>
+            {resolved.length === 0 ? (
+              <p className="vehicle-panel__empty vehicle-panel__empty--sm">Sin alertas solucionadas</p>
+            ) : (
+              <ul className="alerts-list alerts-list--resolved">
+                {resolved.map((alert) => (
+                  <li key={alert.id} className="alert-item alert-item--resolved">
+                    <div className="alert-item__icon alert-item__icon--resolved">
+                      {alert.type && ALERT_CONFIG[alert.type as AlertType]
+                        ? ALERT_CONFIG[alert.type as AlertType].icon
+                        : <AlertTriangle size={14} />}
+                    </div>
+                    <div className="alert-item__body">
+                      <div className="alert-item__vehicle">{alert.vehicle_id}</div>
+                      <div className="alert-item__message">{alert.message}</div>
+                      <div className="alert-item__time">
+                        <Clock size={11} /> {formatDateTime(alert.timestamp)}
+                      </div>
+                    </div>
+                    <CheckCircle size={14} className="alert-resolved-check" />
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
-          {resolved.length === 0 ? (
-            <p className="vehicle-panel__empty vehicle-panel__empty--sm">Sin alertas solucionadas</p>
-          ) : (
-            <ul className="alerts-list alerts-list--resolved">
-              {resolved.map((alert) => (
-                <li key={alert.id} className="alert-item alert-item--resolved">
-                  <div className="alert-item__icon alert-item__icon--resolved">
-                    {alert.type && ALERT_CONFIG[alert.type as AlertType]
-                      ? ALERT_CONFIG[alert.type as AlertType].icon
-                      : <AlertTriangle size={14} />}
-                  </div>
-                  <div className="alert-item__body">
-                    <div className="alert-item__vehicle">{alert.vehicle_id}</div>
-                    <div className="alert-item__message">{alert.message}</div>
-                    <div className="alert-item__time">
-                      <Clock size={11} /> {formatDateTime(alert.timestamp)}
-                    </div>
-                  </div>
-                  <CheckCircle size={14} className="alert-resolved-check" />
-                </li>
-              ))}
-            </ul>
-          )}
         </div>
       )}
 
