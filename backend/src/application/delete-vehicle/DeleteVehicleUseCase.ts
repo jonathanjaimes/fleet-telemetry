@@ -1,5 +1,5 @@
 import type { IVehicleRepository } from '../../domain/repositories/IVehicleRepository'
-import { deleteCachedVehicle, setDeletedFlag } from '../../infrastructure/cache/redisClient'
+import { deleteCachedVehicle, setDeletedFlag, clearStoppedSince } from '../../infrastructure/cache/redisClient'
 
 /**
  * Saga simplificada de eliminación de vehículo:
@@ -20,6 +20,7 @@ export class DeleteVehicleUseCase {
     await deleteCachedVehicle(vehicle_id)
     await this.vehicleRepo.delete(vehicle_id)
     await setDeletedFlag(vehicle_id)
+    await clearStoppedSince(vehicle_id)
 
     return { deleted: true }
   }

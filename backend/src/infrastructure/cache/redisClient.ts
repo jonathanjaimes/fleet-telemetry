@@ -62,6 +62,24 @@ export async function clearManualStop(vehicle_id: string): Promise<void> {
   await redisClient.del(`manual_stop:${vehicle_id}`)
 }
 
+// Rastreo de posición estacionaria: para detectar vehículos genuinamente detenidos
+// sin falsas alarmas por gaps de conectividad o app en segundo plano
+
+export async function getStoppedSince(vehicle_id: string): Promise<Date | null> {
+  const val = await redisClient.get(`stopped_since:${vehicle_id}`)
+  if (!val) return null
+  return new Date(Number(val))
+}
+
+export async function setStoppedSince(vehicle_id: string, since: Date): Promise<void> {
+  // TTL generoso: si no llegan más lecturas, el flag expira solo
+  await redisClient.setEx(`stopped_since:${vehicle_id}`, 600, String(since.getTime()))
+}
+
+export async function clearStoppedSince(vehicle_id: string): Promise<void> {
+  await redisClient.del(`stopped_since:${vehicle_id}`)
+}
+
 // Flag de vehículo eliminado: impide que GPS tardíos lo recreen en DB
 const DELETED_TTL_SECONDS = 30
 

@@ -5,7 +5,17 @@ import { isVehicleStopped, STOPPED_THRESHOLD_MS } from '../../domain/entities/Ve
 import type { IGpsRepository } from '../../domain/repositories/IGpsRepository'
 import type { IVehicleRepository } from '../../domain/repositories/IVehicleRepository'
 import type { IAlertRepository } from '../../domain/repositories/IAlertRepository'
-import { isDuplicate, cacheVehiclePosition, getCachedVehiclePosition, isManualStop, clearManualStop, isDeletedFlag } from '../../infrastructure/cache/redisClient'
+import {
+  isDuplicate,
+  cacheVehiclePosition,
+  getCachedVehiclePosition,
+  isManualStop,
+  clearManualStop,
+  isDeletedFlag,
+  getStoppedSince,
+  setStoppedSince,
+  clearStoppedSince,
+} from '../../infrastructure/cache/redisClient'
 import { emitGpsUpdate, emitVehicleStatus, emitAlert } from '../../infrastructure/websocket/socketServer'
 
 export interface IngestGpsResult {
@@ -37,8 +47,6 @@ export class IngestGpsUseCase {
 
     // Si el conductor acaba de detener el viaje manualmente, ignorar
     // paquetes GPS tardíos que podrían pisar el estado "stopped".
-    // El flag se limpia explícitamente con POST /vehicles/:id/start
-    // o expira solo por TTL de Redis (15s).
     const manuallyStop = await isManualStop(reading.vehicle_id)
     if (manuallyStop) {
       emitGpsUpdate(reading)
@@ -46,22 +54,42 @@ export class IngestGpsUseCase {
     }
 
     if (existing) {
-      const elapsedMs = reading.timestamp.getTime() - existing.lastSeen.getTime()
-      if (isVehicleStopped(existing, reading, elapsedMs)) {
-        newStatus = existing.status === 'alert' ? 'alert' : 'stopped'
+      const samePosition = isVehicleStopped(existing, reading, STOPPED_THRESHOLD_MS)
 
-        if (existing.status !== 'alert' && elapsedMs >= STOPPED_THRESHOLD_MS) {
-          const alert = {
-            id: uuidv4(),
-            vehicle_id: reading.vehicle_id,
-            type: 'VEHICLE_STOPPED' as const,
-            message: `Vehículo detenido por más de ${Math.round(elapsedMs / 1000)} segundos`,
-            timestamp: reading.timestamp,
-          }
-          await this.alertRepo.save(alert)
-          newStatus = 'alert'
-          emitAlert(alert)
+      if (samePosition) {
+        // El vehículo sigue en la misma posición:
+        // usamos stopped_since en Redis para medir tiempo real continuo,
+        // evitando falsos positivos por gaps de conectividad o app en background.
+        let stoppedSince = await getStoppedSince(reading.vehicle_id)
+        if (!stoppedSince) {
+          stoppedSince = reading.timestamp
+          await setStoppedSince(reading.vehicle_id, stoppedSince)
         }
+
+        const continuousStoppedMs = reading.timestamp.getTime() - stoppedSince.getTime()
+
+        if (continuousStoppedMs >= STOPPED_THRESHOLD_MS) {
+          newStatus = existing.status === 'alert' ? 'alert' : 'stopped'
+
+          if (existing.status !== 'alert' && existing.status !== 'stopped') {
+            const alert = {
+              id: uuidv4(),
+              vehicle_id: reading.vehicle_id,
+              type: 'VEHICLE_STOPPED' as const,
+              message: `Vehículo detenido por más de ${Math.round(continuousStoppedMs / 1000)} segundos`,
+              timestamp: reading.timestamp,
+            }
+            await this.alertRepo.save(alert)
+            newStatus = 'alert'
+            emitAlert(alert)
+          }
+        } else {
+          newStatus = existing.status === 'alert' ? 'alert' : existing.status
+        }
+      } else {
+        // El vehículo se movió: resetear el contador
+        await clearStoppedSince(reading.vehicle_id)
+        newStatus = existing.status === 'alert' ? 'alert' : 'moving'
       }
     }
 
