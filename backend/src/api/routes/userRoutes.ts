@@ -53,7 +53,7 @@ userRouter.post('/fleet', async (req: Request, res: Response) => {
 // SUPERADMIN: eliminar usuario flota
 userRouter.delete('/fleet/:id', async (req: Request, res: Response) => {
   if (!await requireRole(req, res, ['superadmin'])) return
-  const target = await userRepo.findByUniqueId(req.params.id)
+  const target = await userRepo.findByUniqueId(String(req.params.id))
   if (!target || target.role !== 'fleet') {
     res.status(404).json({ error: 'Usuario flota no encontrado' })
     return
@@ -97,7 +97,7 @@ userRouter.delete('/drivers/:id', async (req: Request, res: Response) => {
   if (!await requireRole(req, res, ['fleet'])) return
   const callerId = (req.headers['x-user-id'] as string).toUpperCase()
   const caller   = await userRepo.findByUniqueId(callerId)
-  const target   = await userRepo.findByUniqueId(req.params.id)
+  const target   = await userRepo.findByUniqueId(String(req.params.id))
   if (!target || target.role !== 'driver' || target.created_by !== caller!.id) {
     res.status(404).json({ error: 'Conductor no encontrado o sin permisos' })
     return
