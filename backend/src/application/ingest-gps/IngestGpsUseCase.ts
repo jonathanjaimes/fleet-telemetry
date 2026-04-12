@@ -65,7 +65,7 @@ export class IngestGpsUseCase {
         const quietMs = reading.timestamp.getTime() - stoppedSince.getTime()
 
         if (quietMs >= ALERT_THRESHOLD_MS) {
-          // Lleva más de 2 min quieto sin finalizar el viaje → alerta
+          // Más de 2 min quieto sin finalizar el viaje → alerta
           if (existing.status !== 'alert') {
             const lastMovement = stoppedSince.toLocaleString('es-CO', {
               day: '2-digit', month: '2-digit', year: 'numeric',
@@ -83,8 +83,8 @@ export class IngestGpsUseCase {
           }
           newStatus = 'alert'
         } else if (quietMs >= STOPPED_THRESHOLD_MS) {
-          // Entre 30s y 2min quieto → estado stopped, sin alerta aún
-          newStatus = existing.status === 'alert' ? 'alert' : 'stopped'
+          // Entre 30s y 2min quieto → idle (sin alerta, viaje sigue activo)
+          newStatus = existing.status === 'alert' ? 'alert' : 'idle'
         } else {
           // Menos de 30s → mantener estado actual
           newStatus = existing.status === 'alert' ? 'alert' : existing.status

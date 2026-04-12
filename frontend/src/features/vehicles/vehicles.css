@@ -231,7 +231,8 @@
   letter-spacing: 0.04em;
 }
 
-.vehicle-card__badge--success { background: rgba(34,197,94,0.2);  color: var(--color-success); }
+.vehicle-card__badge--success { background: rgba(34,197,94,0.2);   color: var(--color-success); }
+.vehicle-card__badge--idle    { background: rgba(96,165,250,0.2);  color: var(--color-idle);    }
 .vehicle-card__badge--warning { background: rgba(245,158,11,0.2);  color: var(--color-warning); }
 .vehicle-card__badge--danger  { background: rgba(239,68,68,0.2);   color: var(--color-danger);  }
 

@@ -10,13 +10,15 @@ const DEFAULT_ZOOM = 13
 
 const STATUS_COLORS: Record<Vehicle['status'], string> = {
   moving:  '#22c55e',
+  idle:    '#60a5fa',
   stopped: '#f59e0b',
   alert:   '#ef4444',
 }
 
 const STATUS_LABELS: Record<Vehicle['status'], string> = {
   moving:  '🟢 En movimiento',
-  stopped: '🟡 Detenido',
+  idle:    '🔵 Inactivo',
+  stopped: '🟡 Detenido por conductor',
   alert:   '🔴 Alerta',
 }
 

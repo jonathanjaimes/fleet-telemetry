@@ -1,4 +1,4 @@
-export type VehicleStatus = 'moving' | 'stopped' | 'alert'
+export type VehicleStatus = 'moving' | 'idle' | 'stopped' | 'alert'
 
 export interface GpsReading {
   vehicle_id: string

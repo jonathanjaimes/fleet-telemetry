@@ -10,9 +10,10 @@ interface Props {
 }
 
 const STATUS_CONFIG = {
-  moving:  { label: 'En movimiento', color: 'success', icon: '🟢' },
-  stopped: { label: 'Detenido',      color: 'warning', icon: '🟡' },
-  alert:   { label: 'Alerta',        color: 'danger',  icon: '🔴' },
+  moving:  { label: 'En movimiento',       color: 'success', icon: '🟢' },
+  idle:    { label: 'Inactivo',            color: 'idle',    icon: '🔵' },
+  stopped: { label: 'Detenido por conductor', color: 'warning', icon: '🟡' },
+  alert:   { label: 'Alerta',             color: 'danger',  icon: '🔴' },
 }
 
 function formatTime(iso: string): string {
