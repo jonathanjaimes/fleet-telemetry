@@ -14,7 +14,35 @@ const STATUS_COLORS: Record<Vehicle['status'], string> = {
   alert:   '#ef4444',
 }
 
-function createMarkerIcon(color: string): L.DivIcon {
+function createMarkerIcon(color: string, selected = false): L.DivIcon {
+  if (selected) {
+    return L.divIcon({
+      className: '',
+      html: `
+        <div style="position: relative; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;">
+          <div style="
+            position: absolute;
+            width: 28px; height: 28px;
+            background: ${color}33;
+            border: 2px solid ${color};
+            border-radius: 50%;
+            animation: pulse-ring 1.2s ease-out infinite;
+          "></div>
+          <div style="
+            width: 16px; height: 16px;
+            background: ${color};
+            border: 3px solid #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 10px ${color}, 0 0 20px ${color}88;
+            position: relative;
+            z-index: 1;
+          "></div>
+        </div>`,
+      iconSize: [28, 28],
+      iconAnchor: [14, 14],
+    })
+  }
+
   return L.divIcon({
     className: '',
     html: `
@@ -82,14 +110,15 @@ export function FleetMap() {
 
     Object.values(vehicles).forEach((vehicle) => {
       const color    = STATUS_COLORS[vehicle.status]
+      const isSelected = vehicle.id === selectedId
       const position: [number, number] = [vehicle.lat, vehicle.lng]
 
       if (markersRef.current[vehicle.id]) {
         markersRef.current[vehicle.id]
           .setLatLng(position)
-          .setIcon(createMarkerIcon(color))
+          .setIcon(createMarkerIcon(color, isSelected))
       } else {
-        const marker = L.marker(position, { icon: createMarkerIcon(color) })
+        const marker = L.marker(position, { icon: createMarkerIcon(color, isSelected) })
           .addTo(map)
           .bindTooltip(vehicle.label, { permanent: false, direction: 'top' })
           .on('click', () => selectVehicle(vehicle.id))
@@ -105,7 +134,7 @@ export function FleetMap() {
 
       polylinesRef.current[vehicle.id].setStyle({ color })
     })
-  }, [vehicles, selectVehicle])
+  }, [vehicles, selectedId, selectVehicle])
 
   // Seguir al vehículo seleccionado solo si el seguimiento está activo
   useEffect(() => {
@@ -133,7 +162,7 @@ export function FleetMap() {
 
       {selectedId && !isFollowing && (
         <button className="follow-btn" onClick={handleResumeFollow}>
-          🎯 Seguir vehículo
+          🎯 Seguir {selectedId}
         </button>
       )}
 

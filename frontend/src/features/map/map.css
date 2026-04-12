@@ -1,3 +1,8 @@
+@keyframes pulse-ring {
+  0%   { transform: scale(0.8); opacity: 0.8; }
+  100% { transform: scale(2);   opacity: 0; }
+}
+
 .fleet-map-wrapper {
   flex: 1;
   position: relative;
