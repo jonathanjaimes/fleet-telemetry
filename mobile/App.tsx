@@ -215,10 +215,19 @@ export default function App() {
   const [checking, setChecking] = useState(true)
 
   useEffect(() => {
-    loadSession().then((s) => {
-      if (s) setDriverId(s.unique_id)
+    const validate = async () => {
+      const s = await loadSession()
+      if (s) {
+        const result = await loginDriver(s.unique_id)
+        if (result === 'ok') {
+          setDriverId(s.unique_id)
+        } else {
+          await clearSession()
+        }
+      }
       setChecking(false)
-    })
+    }
+    validate()
   }, [])
 
   const handleLogout = async () => {
