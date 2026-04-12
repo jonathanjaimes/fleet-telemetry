@@ -17,6 +17,18 @@ vehicleRouter.get('/', async (_req: Request, res: Response) => {
   res.json(vehicles)
 })
 
+vehicleRouter.post('/:id/stop', async (req: Request, res: Response) => {
+  const vehicle_id = String(req.params.id)
+  const existing = await vehicleRepo.findById(vehicle_id)
+  if (!existing) {
+    res.status(404).json({ error: 'Vehicle not found' })
+    return
+  }
+  await vehicleRepo.upsert({ ...existing, status: 'stopped' })
+  emitVehicleStatus(vehicle_id, 'stopped')
+  res.json({ message: 'Vehicle marked as stopped' })
+})
+
 vehicleRouter.post('/:id/panic', async (req: Request, res: Response) => {
   const vehicle_id = String(req.params.id)
   const alert = {

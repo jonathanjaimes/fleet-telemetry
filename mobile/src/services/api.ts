@@ -43,6 +43,14 @@ export async function sendGpsReading(payload: GpsPayload): Promise<'accepted' | 
   }
 }
 
+export async function sendTripStop(vehicle_id: string): Promise<void> {
+  try {
+    await client.post(`/api/vehicles/${vehicle_id}/stop`)
+  } catch {
+    // Si falla, el backend lo detectará por inactividad
+  }
+}
+
 export async function sendPanicAlert(vehicle_id: string, lat: number, lng: number): Promise<boolean> {
   try {
     await client.post(`/api/vehicles/${vehicle_id}/panic`, { lat, lng })
