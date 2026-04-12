@@ -65,15 +65,17 @@ export function VehicleCard({ vehicle, isSelected, onClick, onDelete }: Props) {
       <div className="vehicle-card__header">
         <span className={`vehicle-card__dot vehicle-card__dot--${config.color}`} />
         <span className="vehicle-card__id">{vehicle.label}</span>
-        <span className={`vehicle-card__badge vehicle-card__badge--${config.color}`}>
-          {config.label}
-        </span>
         {!confirming && (
           <button className="vehicle-card__delete" onClick={handleDeleteClick} title="Eliminar vehículo">
             ✕
           </button>
         )}
       </div>
+      {!confirming && (
+        <span className={`vehicle-card__status vehicle-card__badge--${config.color}`}>
+          {config.label}
+        </span>
+      )}
 
       {confirming ? (
         <div className="vehicle-card__confirm">
