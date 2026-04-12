@@ -161,19 +161,19 @@ function TelemetryScreen({ driverId, onLogout }: { driverId: string; onLogout: (
 
       <View style={styles.header}>
         <Text style={styles.headerTitle}>🚛 Fleet Telemetría</Text>
-        <View style={styles.headerRight}>
-          <View style={styles.statusBadge}>
-            <Text style={[styles.statusDot, { color: cfg.color }]}>{cfg.dot}</Text>
-            <Text style={[styles.statusLabel, { color: cfg.color }]}>{cfg.label}</Text>
-          </View>
-          <TouchableOpacity onPress={handleLogout}>
-            <Text style={styles.logoutBtn}>Salir</Text>
-          </TouchableOpacity>
+        <View style={styles.statusBadge}>
+          <Text style={[styles.statusDot, { color: cfg.color }]}>{cfg.dot}</Text>
+          <Text style={[styles.statusLabel, { color: cfg.color }]}>{cfg.label}</Text>
         </View>
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Viaje actual</Text>
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardTitle}>Viaje actual</Text>
+          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+            <Text style={styles.logoutBtnText}>⏏ Cerrar sesión</Text>
+          </TouchableOpacity>
+        </View>
         <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>Estado</Text>
           <Text style={[styles.infoValue, { color: trip.isActive ? '#22c55e' : '#64748b' }]}>
@@ -306,14 +306,16 @@ const styles = StyleSheet.create({
 
   header:         { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#2a2d3e' },
   headerTitle:    { color: '#e2e8f0', fontSize: 16, fontWeight: '700' },
-  headerRight:    { flexDirection: 'row', alignItems: 'center', gap: 12 },
   statusBadge:    { flexDirection: 'row', alignItems: 'center', gap: 4 },
   statusDot:      { fontSize: 10 },
   statusLabel:    { fontSize: 12, fontWeight: '600' },
-  logoutBtn:      { color: '#64748b', fontSize: 13 },
+
+  cardHeader:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  logoutBtn:      { backgroundColor: '#1e293b', borderWidth: 1, borderColor: '#334155', borderRadius: 8, paddingVertical: 4, paddingHorizontal: 10 },
+  logoutBtnText:  { color: '#94a3b8', fontSize: 12, fontWeight: '600' },
 
   card:           { margin: 16, backgroundColor: '#1a1d27', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#2a2d3e' },
-  cardTitle:      { color: '#64748b', fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 },
+  cardTitle:      { color: '#64748b', fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
   infoRow:        { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   infoLabel:      { color: '#64748b', fontSize: 14 },
   infoValue:      { color: '#e2e8f0', fontSize: 14, fontWeight: '600' },
