@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
-  StyleSheet, SafeAreaView, StatusBar, Alert, ActivityIndicator,
+  StyleSheet, StatusBar, Alert, ActivityIndicator,
   KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, Modal,
 } from 'react-native'
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
 import { useTelemetry } from './src/hooks/useTelemetry'
 import { loginDriver } from './src/services/api'
 import { saveSession, loadSession, clearSession } from './src/services/authStorage'
@@ -279,14 +280,27 @@ export default function App() {
 
   if (checking) {
     return (
-      <SafeAreaView style={styles.container}>
-        <ActivityIndicator color="#3b82f6" style={{ marginTop: 80 }} />
-      </SafeAreaView>
+      <SafeAreaProvider>
+        <SafeAreaView style={styles.container}>
+          <ActivityIndicator color="#3b82f6" style={{ marginTop: 80 }} />
+        </SafeAreaView>
+      </SafeAreaProvider>
     )
   }
 
-  if (!driverId) return <LoginScreen onLogin={setDriverId} />
-  return <TelemetryScreen driverId={driverId} onLogout={handleLogout} />
+  if (!driverId) {
+    return (
+      <SafeAreaProvider>
+        <LoginScreen onLogin={setDriverId} />
+      </SafeAreaProvider>
+    )
+  }
+
+  return (
+    <SafeAreaProvider>
+      <TelemetryScreen driverId={driverId} onLogout={handleLogout} />
+    </SafeAreaProvider>
+  )
 }
 
 const styles = StyleSheet.create({
