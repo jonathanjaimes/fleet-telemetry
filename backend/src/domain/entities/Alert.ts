@@ -8,11 +8,11 @@ export type AlertType =
 
 export const PANIC_LABELS: Record<AlertType, string> = {
   VEHICLE_STOPPED:  'Sin movimiento detectado',
-  PANIC_ACCIDENT:   '🚨 Accidente',
-  PANIC_ROBBERY:    '🔫 Robo / Asalto',
-  PANIC_MEDICAL:    '🚑 Emergencia médica',
-  PANIC_MECHANICAL: '⚠️ Falla mecánica',
-  PANIC_OTHER:      '🆘 Otra emergencia',
+  PANIC_ACCIDENT:   'Accidente',
+  PANIC_ROBBERY:    'Robo / Asalto',
+  PANIC_MEDICAL:    'Emergencia médica',
+  PANIC_MECHANICAL: 'Falla mecánica',
+  PANIC_OTHER:      'Otra emergencia',
 }
 
 export interface Alert {
