@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Truck } from 'lucide-react'
 import { useAuthStore } from '../store/useAuthStore'
+import { ThemeToggle } from '../components/ThemeToggle'
 import './AdminPage.css'
 
 const BACKEND = 'http://localhost:3001'
@@ -53,6 +54,7 @@ export function SuperAdminPage() {
         </div>
         <div className="admin-header__right">
           <span className="admin-header__id">{user?.unique_id}</span>
+          <ThemeToggle />
           <button className="admin-logout" onClick={logout}>Cerrar sesión</button>
         </div>
       </header>

@@ -5,6 +5,7 @@ import { VehiclePanel } from '../features/vehicles/VehiclePanel'
 import { FleetMap } from '../features/map/FleetMap'
 import { useSocket } from '../hooks/useSocket'
 import { useFleetStore } from '../store/useFleetStore'
+import { ThemeToggle } from '../components/ThemeToggle'
 import './AdminPage.css'
 import '../App.css'
 
@@ -73,6 +74,7 @@ export function FleetPage() {
           {isConnected ? 'En vivo' : 'Sin conexión'}
         </span>
         <span className="admin-header__id">{user?.unique_id}</span>
+        <ThemeToggle />
         <button className="admin-logout" onClick={logout}>Salir</button>
       </header>
 

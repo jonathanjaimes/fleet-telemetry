@@ -49,8 +49,8 @@
 .vehicle-panel__conn--off { color: var(--color-text-muted); }
 
 .vehicle-panel__alert-banner {
-  background-color: rgba(239, 68, 68, 0.15);
-  border-bottom: 1px solid rgba(239, 68, 68, 0.3);
+  background-color: var(--color-danger-bg);
+  border-bottom: 1px solid rgba(204, 23, 74, 0.3);
   color: var(--color-danger);
   font-size: 0.8rem;
   font-weight: 600;
@@ -114,7 +114,7 @@
 }
 
 .panel-tab__badge--danger {
-  background-color: rgba(239, 68, 68, 0.2);
+  background-color: var(--color-danger-bg);
   color: var(--color-danger);
 }
 
@@ -169,7 +169,7 @@
   transition: border-color 0.15s;
 }
 
-.alert-item:hover { border-color: rgba(239, 68, 68, 0.4); }
+.alert-item:hover { border-color: rgba(204, 23, 74, 0.4); }
 
 .alert-item__icon {
   font-size: 1.2rem;
@@ -228,7 +228,7 @@
 
 .vehicle-card--selected {
   border-color: var(--color-primary);
-  background-color: rgba(59, 130, 246, 0.08);
+  background-color: var(--color-nav-active);
 }
 
 .vehicle-card__header {
@@ -277,16 +277,16 @@
   letter-spacing: 0.04em;
 }
 
-.vehicle-card__badge--success { background: rgba(34,197,94,0.2);   color: var(--color-success); }
-.vehicle-card__badge--idle    { background: rgba(96,165,250,0.2);  color: var(--color-idle);    }
-.vehicle-card__badge--warning { background: rgba(245,158,11,0.2);  color: var(--color-warning); }
-.vehicle-card__badge--danger  { background: rgba(239,68,68,0.2);   color: var(--color-danger);  }
+.vehicle-card__badge--success { background: var(--color-success-bg); color: var(--color-success); }
+.vehicle-card__badge--idle    { background: var(--color-idle-bg);    color: var(--color-idle);    }
+.vehicle-card__badge--warning { background: var(--color-warning-bg); color: var(--color-warning); }
+.vehicle-card__badge--danger  { background: var(--color-danger-bg);  color: var(--color-danger);  }
 
 .vehicle-card__alert-type {
   font-size: 0.72rem;
   font-weight: 600;
   color: var(--color-danger);
-  background: rgba(239,68,68,0.1);
+  background: var(--color-danger-bg);
   border-radius: 4px;
   padding: 0.15rem 0.4rem;
   margin-bottom: 0.3rem;
@@ -313,7 +313,7 @@
   transition: background 0.15s, color 0.15s;
 }
 .vehicle-card__delete:hover {
-  background: rgba(239,68,68,0.15);
+  background: var(--color-danger-bg);
   color: var(--color-danger);
 }
 
@@ -382,7 +382,7 @@
   font-weight: 700;
 }
 .alerts-section-count--danger {
-  background: rgba(239,68,68,0.15);
+  background: var(--color-danger-bg);
   color: var(--color-danger);
 }
 
@@ -406,7 +406,7 @@
 }
 .alert-resolve-btn:hover {
   color: var(--color-success);
-  background: rgba(34,197,94,0.1);
+  background: var(--color-success-bg);
 }
 
 .vehicle-panel__empty--sm {
@@ -499,7 +499,7 @@
 }
 .resolve-modal__stop-trip:hover {
   border-color: var(--color-primary);
-  background: rgba(59, 130, 246, 0.06);
+  background: var(--color-nav-active);
 }
 .resolve-modal__stop-trip input[type='checkbox'] {
   width: 15px;

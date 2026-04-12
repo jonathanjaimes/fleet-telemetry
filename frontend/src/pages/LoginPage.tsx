@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Truck } from 'lucide-react'
 import { useAuthStore } from '../store/useAuthStore'
+import { ThemeToggle } from '../components/ThemeToggle'
 import './LoginPage.css'
 
 const BACKEND = 'http://localhost:3001'
@@ -42,6 +43,7 @@ export function LoginPage() {
 
   return (
     <div className="login-page">
+      <ThemeToggle floating />
       <div className="login-card">
         <div className="login-card__logo"><Truck size={40} strokeWidth={1.5} /></div>
         <h1 className="login-card__title">Fleet Telemetry</h1>

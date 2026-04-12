@@ -26,13 +26,13 @@
   font-weight: 600;
   padding: 0.2rem 0.5rem;
   border-radius: 9999px;
-  color: #fff;
+  color: var(--color-primary-fg);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
-.badge--on  { background-color: var(--color-success); }
-.badge--off { background-color: var(--color-text-muted); }
+.badge--on  { background-color: var(--color-success); color: #fff; }
+.badge--off { background-color: var(--color-text-muted); color: #fff; }
 
 .app-body {
   display: flex;

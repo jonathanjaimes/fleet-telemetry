@@ -4,31 +4,140 @@
   padding: 0;
 }
 
+/* ─── Primitivos de la paleta (no cambian entre temas) ───────────────────── */
 :root {
-  --color-bg: #0f1117;
-  --color-surface: #1a1d27;
-  --color-border: #2a2d3e;
-  --color-text: #e2e8f0;
-  --color-text-muted: #64748b;
-  --color-primary: #3b82f6;
-  --color-success: #22c55e;
-  --color-idle:    #60a5fa;
-  --color-warning: #f59e0b;
-  --color-danger: #ef4444;
+  /* Brand primary */
+  --brand-50:   #e7fffa;
+  --brand-100:  #c6fff0;
+  --brand-400:  #00F1C7;
+  --brand-600:  #00be9c;
+  --brand-700:  #009882;
+  --brand-800:  #007868;
+  --brand-900:  #006257;
+  --brand-950:  #003833;
+
+  /* Neutral */
+  --neutral-40:  #555555;
+  --neutral-50:  #777777;
+  --neutral-70:  #989898;
+  --neutral-80:  #BABABA;
+  --neutral-90:  #DBDBDB;
+  --neutral-95:  #F5F5F7;
+  --neutral-100: #FDFDFD;
+
+  /* Feedback */
+  --feedback-green:      #1BA362;
+  --feedback-green-50:   #D1EDE0;
+  --feedback-orange:     #F2DC18;
+  --feedback-orange-50:  #FFFBD2;
+  --feedback-red:        #CC174A;
+  --feedback-red-50:     #F7D5D6;
+  --feedback-blue:       #0066FF;
+  --feedback-blue-50:    #CCE0FF;
+  --feedback-lightblue:  #EBEEF9;
+
+  /* Layout */
   --sidebar-width: 340px;
   --header-height: 56px;
 }
 
+/* ─── Tema oscuro (default) ──────────────────────────────────────────────── */
+:root,
+[data-theme='dark'] {
+  --color-bg:           #080f0d;
+  --color-surface:      #0f1c18;
+  --color-surface-2:    #162822;
+  --color-border:       #1e3830;
+  --color-text:         var(--neutral-100);
+  --color-text-muted:   var(--neutral-50);
+
+  --color-primary:      var(--brand-400);
+  --color-primary-hover:var(--brand-600);
+  --color-primary-fg:   var(--brand-950);   /* texto sobre botón primario */
+
+  --color-success:      var(--feedback-green);
+  --color-success-bg:   rgba(27, 163, 98, 0.15);
+  --color-idle:         var(--feedback-blue);
+  --color-idle-bg:      rgba(0, 102, 255, 0.15);
+  --color-warning:      var(--feedback-orange);
+  --color-warning-bg:   rgba(242, 220, 24, 0.15);
+  --color-danger:       var(--feedback-red);
+  --color-danger-bg:    rgba(204, 23, 74, 0.15);
+
+  --color-hint-bg:      rgba(0, 241, 199, 0.06);
+  --color-nav-active:   rgba(0, 241, 199, 0.12);
+  --color-table-row:    rgba(255, 255, 255, 0.03);
+}
+
+/* ─── Tema claro ─────────────────────────────────────────────────────────── */
+[data-theme='light'] {
+  --color-bg:           var(--neutral-95);
+  --color-surface:      #ffffff;
+  --color-surface-2:    var(--feedback-lightblue);
+  --color-border:       var(--neutral-90);
+  --color-text:         #000000;
+  --color-text-muted:   var(--neutral-40);
+
+  --color-primary:      var(--brand-800);
+  --color-primary-hover:var(--brand-900);
+  --color-primary-fg:   #ffffff;
+
+  --color-success:      var(--feedback-green);
+  --color-success-bg:   var(--feedback-green-50);
+  --color-idle:         var(--feedback-blue);
+  --color-idle-bg:      var(--feedback-blue-50);
+  --color-warning:      #8a7a00;
+  --color-warning-bg:   var(--feedback-orange-50);
+  --color-danger:       var(--feedback-red);
+  --color-danger-bg:    var(--feedback-red-50);
+
+  --color-hint-bg:      rgba(0, 120, 104, 0.06);
+  --color-nav-active:   rgba(0, 120, 104, 0.1);
+  --color-table-row:    rgba(0, 0, 0, 0.02);
+}
+
+/* ─── Base ───────────────────────────────────────────────────────────────── */
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background-color: var(--color-bg);
   color: var(--color-text);
   height: 100vh;
   overflow: hidden;
+  transition: background-color 0.2s, color 0.2s;
 }
 
 #root {
   height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+/* ─── Botón de cambio de tema ────────────────────────────────────────────── */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+
+.theme-toggle:hover {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  background: var(--color-nav-active);
+}
+
+/* Toggle flotante para la pantalla de login */
+.theme-toggle--floating {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 100;
 }
