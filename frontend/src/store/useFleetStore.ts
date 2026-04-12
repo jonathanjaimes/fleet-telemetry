@@ -94,18 +94,21 @@ export const useFleetStore = create<FleetState>((set) => ({
       }
     }),
 
-  resolveAlert: (alert_id, vehicle_id, alert_type) =>
+  resolveAlert: (alert_id, vehicle_id, _alert_type) =>
     set((state) => {
       const alerts = state.alerts.map((a) =>
         a.id === alert_id ? { ...a, resolved: true } : a
       )
       const vehicles = { ...state.vehicles }
-      if (alert_type === 'VEHICLE_STOPPED' && vehicles[vehicle_id]) {
-        const v = vehicles[vehicle_id]
-        if (v.status === 'alert') {
-          vehicles[vehicle_id] = { ...v, status: 'idle' }
-        }
+
+      // Si no quedan más alertas sin resolver para este vehículo, pasa a idle
+      const hasOtherUnresolved = alerts.some(
+        (a) => a.vehicle_id === vehicle_id && !a.resolved
+      )
+      if (!hasOtherUnresolved && vehicles[vehicle_id]?.status === 'alert') {
+        vehicles[vehicle_id] = { ...vehicles[vehicle_id], status: 'idle' }
       }
+
       return { alerts, vehicles }
     }),
 

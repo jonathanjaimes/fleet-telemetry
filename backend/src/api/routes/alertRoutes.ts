@@ -53,7 +53,10 @@ alertRouter.patch('/:id/resolve', async (req, res) => {
 
     await alertRepo.resolve(id)
 
-    if (alert.type === 'VEHICLE_STOPPED') {
+    // Si no quedan más alertas sin resolver para este vehículo, pasa a idle
+    const remaining = (await alertRepo.findByVehicleIds([alert.vehicle_id]))
+      .filter((a) => !a.resolved)
+    if (remaining.length === 0) {
       const vehicle = await vehicleRepo.findById(alert.vehicle_id)
       if (vehicle && vehicle.status === 'alert') {
         await vehicleRepo.updateStatus(alert.vehicle_id, 'idle')
