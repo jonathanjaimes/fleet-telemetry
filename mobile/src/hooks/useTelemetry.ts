@@ -40,7 +40,7 @@ export function useTelemetry(driverId: string) {
       setStatus('disconnected')
 
       const alert: Omit<LocalAlert, 'id'> = {
-        message: '⚠️ Tu vehículo fue eliminado desde el dashboard — viaje finalizado',
+        message: 'Tu vehículo fue eliminado desde el dashboard — viaje finalizado',
         timestamp: new Date().toISOString(),
         type: 'CONNECTION_LOST',
       }
@@ -127,7 +127,7 @@ export function useTelemetry(driverId: string) {
     const lng = location?.lng ?? 0
     const sent = await sendPanicAlert(VEHICLE_ID, lat, lng, panicType)
     await addAlert({
-      message: sent ? '🚨 Alerta de pánico enviada al servidor' : '🚨 Botón de pánico activado — sin conexión',
+      message: sent ? 'Alerta de pánico enviada al servidor' : 'Botón de pánico activado — sin conexión',
       timestamp: new Date().toISOString(),
       type: 'PANIC_BUTTON',
     })
