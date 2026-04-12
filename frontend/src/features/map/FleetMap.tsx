@@ -14,6 +14,46 @@ const STATUS_COLORS: Record<Vehicle['status'], string> = {
   alert:   '#ef4444',
 }
 
+const STATUS_LABELS: Record<Vehicle['status'], string> = {
+  moving:  '🟢 En movimiento',
+  stopped: '🟡 Detenido',
+  alert:   '🔴 Alerta',
+}
+
+function formatTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString('es-CO', {
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+  })
+}
+
+function buildPopupHtml(vehicle: Vehicle): string {
+  const color = STATUS_COLORS[vehicle.status]
+  return `
+    <div class="vehicle-popup">
+      <div class="vehicle-popup__header" style="border-left: 3px solid ${color}">
+        <span class="vehicle-popup__id">${vehicle.id}</span>
+        <span class="vehicle-popup__status">${STATUS_LABELS[vehicle.status]}</span>
+      </div>
+      <div class="vehicle-popup__row">
+        <span class="vehicle-popup__label">Latitud</span>
+        <span class="vehicle-popup__value">${vehicle.lat.toFixed(6)}</span>
+      </div>
+      <div class="vehicle-popup__row">
+        <span class="vehicle-popup__label">Longitud</span>
+        <span class="vehicle-popup__value">${vehicle.lng.toFixed(6)}</span>
+      </div>
+      <div class="vehicle-popup__row">
+        <span class="vehicle-popup__label">Última señal</span>
+        <span class="vehicle-popup__value">${formatTime(vehicle.lastSeen)}</span>
+      </div>
+      <div class="vehicle-popup__row">
+        <span class="vehicle-popup__label">Puntos de ruta</span>
+        <span class="vehicle-popup__value">${vehicle.route.length}</span>
+      </div>
+    </div>
+  `
+}
+
 function createMarkerIcon(color: string, selected = false): L.DivIcon {
   if (selected) {
     return L.divIcon({
@@ -64,14 +104,12 @@ export function FleetMap() {
   const markersRef   = useRef<Record<string, L.Marker>>({})
   const polylinesRef = useRef<Record<string, L.Polyline>>({})
 
-  // Controla si el seguimiento automático está activo
   const [isFollowing, setIsFollowing] = useState(false)
 
   const vehicles      = useFleetStore((s) => s.vehicles)
   const selectedId    = useFleetStore((s) => s.selectedVehicleId)
   const selectVehicle = useFleetStore((s) => s.selectVehicle)
 
-  // Inicializar el mapa una sola vez
   useEffect(() => {
     if (mapRef.current || !containerRef.current) return
 
@@ -86,7 +124,6 @@ export function FleetMap() {
       maxZoom: 19,
     }).addTo(mapRef.current)
 
-    // Cuando el usuario interactúa con el mapa (zoom, drag) → pausar seguimiento
     const pauseFollow = () => setIsFollowing(false)
     mapRef.current.on('zoomstart', pauseFollow)
     mapRef.current.on('dragstart', pauseFollow)
@@ -97,31 +134,37 @@ export function FleetMap() {
     }
   }, [])
 
-  // Cuando se selecciona un vehículo → activar seguimiento automáticamente
   useEffect(() => {
     if (selectedId) setIsFollowing(true)
     else setIsFollowing(false)
   }, [selectedId])
 
-  // Actualizar marcadores y rutas cuando cambian los vehículos
+  // Actualizar marcadores, popups y rutas
   useEffect(() => {
     const map = mapRef.current
     if (!map) return
 
     Object.values(vehicles).forEach((vehicle) => {
-      const color    = STATUS_COLORS[vehicle.status]
+      const color      = STATUS_COLORS[vehicle.status]
       const isSelected = vehicle.id === selectedId
       const position: [number, number] = [vehicle.lat, vehicle.lng]
+      const popupHtml  = buildPopupHtml(vehicle)
 
       if (markersRef.current[vehicle.id]) {
-        markersRef.current[vehicle.id]
-          .setLatLng(position)
-          .setIcon(createMarkerIcon(color, isSelected))
+        const marker = markersRef.current[vehicle.id]
+        marker.setLatLng(position).setIcon(createMarkerIcon(color, isSelected))
+        // Actualizar contenido del popup si está abierto
+        if (marker.isPopupOpen()) marker.setPopupContent(popupHtml)
+        else marker.bindPopup(popupHtml, { className: 'vehicle-popup-container', maxWidth: 260 })
       } else {
         const marker = L.marker(position, { icon: createMarkerIcon(color, isSelected) })
           .addTo(map)
-          .bindTooltip(vehicle.label, { permanent: false, direction: 'top' })
-          .on('click', () => selectVehicle(vehicle.id))
+          .bindPopup(popupHtml, { className: 'vehicle-popup-container', maxWidth: 260 })
+          .on('click', () => {
+            selectVehicle(vehicle.id)
+            marker.openPopup()
+          })
+
         markersRef.current[vehicle.id] = marker
       }
 
@@ -131,19 +174,15 @@ export function FleetMap() {
         const polyline = L.polyline(vehicle.route, { color, weight: 2, opacity: 0.6 }).addTo(map)
         polylinesRef.current[vehicle.id] = polyline
       }
-
       polylinesRef.current[vehicle.id].setStyle({ color })
     })
   }, [vehicles, selectedId, selectVehicle])
 
-  // Seguir al vehículo seleccionado solo si el seguimiento está activo
   useEffect(() => {
     const map = mapRef.current
     if (!map || !selectedId || !isFollowing) return
     const vehicle = vehicles[selectedId]
-    if (vehicle) {
-      map.setView([vehicle.lat, vehicle.lng], map.getZoom(), { animate: true })
-    }
+    if (vehicle) map.setView([vehicle.lat, vehicle.lng], map.getZoom(), { animate: true })
   }, [selectedId, vehicles, isFollowing])
 
   const handleResumeFollow = useCallback(() => {

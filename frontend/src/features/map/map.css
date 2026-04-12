@@ -14,6 +14,88 @@
   height: 100%;
 }
 
+/* ── Popup del vehículo ─────────────────────────────────────────────────── */
+.vehicle-popup-container .leaflet-popup-content-wrapper {
+  background-color: #1a1d27;
+  border: 1px solid #2a2d3e;
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  padding: 0;
+  overflow: hidden;
+}
+
+.vehicle-popup-container .leaflet-popup-content {
+  margin: 0;
+  width: auto !important;
+}
+
+.vehicle-popup-container .leaflet-popup-tip {
+  background-color: #1a1d27;
+}
+
+.vehicle-popup-container .leaflet-popup-close-button {
+  color: #64748b;
+  font-size: 18px;
+  top: 6px;
+  right: 8px;
+}
+
+.vehicle-popup-container .leaflet-popup-close-button:hover {
+  color: #e2e8f0;
+}
+
+.vehicle-popup {
+  min-width: 220px;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.vehicle-popup__header {
+  padding: 0.75rem 1rem;
+  background-color: #0f1117;
+  border-bottom: 1px solid #2a2d3e;
+  padding-left: 0.85rem;
+}
+
+.vehicle-popup__id {
+  display: block;
+  color: #e2e8f0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+}
+
+.vehicle-popup__status {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.vehicle-popup__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.45rem 1rem;
+  border-bottom: 1px solid #2a2d3e22;
+}
+
+.vehicle-popup__row:last-child {
+  border-bottom: none;
+}
+
+.vehicle-popup__label {
+  color: #64748b;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.vehicle-popup__value {
+  color: #e2e8f0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Botón seguir ───────────────────────────────────────────────────────── */
 .follow-btn {
   position: absolute;
   bottom: 2rem;
