@@ -244,10 +244,9 @@ function TelemetryScreen({ driverId, onLogout }: { driverId: string; onLogout: (
       <Modal visible={logoutModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={[styles.modalBox, styles.logoutModalBox]}>
-            <Text style={styles.modalTitle}>Cerrar sesión</Text>
-            <Text style={styles.logoutModalSubtitle}>
-              ¿Seguro que deseas cerrar sesión?{'\n'}
-              <Text style={styles.logoutModalId}>{driverId}</Text>
+            <Text style={styles.modalTitle}>
+              ¿Seguro que deseas cerrar la sesión para el usuario{' '}
+              <Text style={styles.logoutModalId}>{driverId}</Text>?
             </Text>
             <TouchableOpacity style={styles.logoutConfirmBtn} onPress={onLogout}>
               <Text style={styles.logoutConfirmText}>Sí, cerrar sesión</Text>
@@ -385,10 +384,9 @@ const styles = StyleSheet.create({
   alertTime:      { color: '#64748b', fontSize: 11 },
 
   modalOverlay:   { flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'flex-end' },
-  logoutModalBox:       { alignItems: 'center', paddingVertical: 32 },
-  logoutModalSubtitle:  { color: '#94a3b8', fontSize: 14, textAlign: 'center', marginBottom: 24, lineHeight: 22 },
+  logoutModalBox:       { alignItems: 'center', paddingVertical: 28, gap: 20 },
   logoutModalId:        { color: '#60a5fa', fontWeight: '700' },
-  logoutConfirmBtn:     { width: '100%', backgroundColor: '#ef4444', borderRadius: 12, padding: 16, alignItems: 'center', marginBottom: 4 },
+  logoutConfirmBtn:     { width: '100%', backgroundColor: '#ef4444', borderRadius: 12, padding: 16, alignItems: 'center' },
   logoutConfirmText:    { color: '#fff', fontSize: 16, fontWeight: '700' },
   modalBox:       { backgroundColor: '#1a1d27', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 36 },
   modalTitle:     { color: '#e2e8f0', fontSize: 20, fontWeight: '800', textAlign: 'center', marginBottom: 4 },
