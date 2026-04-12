@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import * as Location from 'expo-location'
 import { sendGpsReading, sendPanicAlert, sendTripStart, sendTripStop } from '../services/api'
+import { getSocket } from '../services/socket'
 import { saveAlert, getAlerts } from '../services/alertStorage'
 import type { ConnectionStatus, LocalAlert, TripState } from '../types'
 
@@ -23,6 +24,34 @@ export function useTelemetry() {
       setPermission(s === 'granted')
     })
     getAlerts().then(setAlerts)
+  }, [])
+
+  // Escuchar evento vehicle:deleted desde el dashboard
+  useEffect(() => {
+    const socket = getSocket()
+
+    const handleDeleted = (data: { vehicle_id: string }) => {
+      if (data.vehicle_id !== VEHICLE_ID) return
+
+      stoppingRef.current = true
+      if (intervalRef.current) clearInterval(intervalRef.current)
+
+      setTrip({ isActive: false, startedAt: null, vehicleId: VEHICLE_ID })
+      setStatus('disconnected')
+
+      const alert: Omit<LocalAlert, 'id'> = {
+        message: '⚠️ Tu vehículo fue eliminado desde el dashboard — viaje finalizado',
+        timestamp: new Date().toISOString(),
+        type: 'CONNECTION_LOST',
+      }
+      saveAlert({ ...alert, id: Date.now().toString() })
+      setAlerts((prev) => [{ ...alert, id: Date.now().toString() }, ...prev].slice(0, 50))
+
+      setTimeout(() => { stoppingRef.current = false }, 3000)
+    }
+
+    socket.on('vehicle:deleted', handleDeleted)
+    return () => { socket.off('vehicle:deleted', handleDeleted) }
   }, [])
 
   const addAlert = useCallback(async (alert: Omit<LocalAlert, 'id'>) => {
