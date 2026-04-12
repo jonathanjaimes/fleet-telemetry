@@ -221,7 +221,17 @@
   margin-bottom: 0.4rem;
 }
 
-.vehicle-card__icon { font-size: 0.75rem; }
+.vehicle-card__dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.vehicle-card__dot--success { background: var(--color-success); }
+.vehicle-card__dot--idle    { background: var(--color-idle); }
+.vehicle-card__dot--warning { background: var(--color-warning); }
+.vehicle-card__dot--danger  { background: var(--color-danger); }
 
 .vehicle-card__id {
   font-size: 0.875rem;

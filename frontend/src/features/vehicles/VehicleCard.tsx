@@ -11,10 +11,10 @@ interface Props {
 }
 
 const STATUS_CONFIG = {
-  moving:  { label: 'En movimiento',       color: 'success', icon: '🟢' },
-  idle:    { label: 'Inactivo',            color: 'idle',    icon: '🔵' },
-  stopped: { label: 'Detenido por conductor', color: 'warning', icon: '🟡' },
-  alert:   { label: 'Alerta',             color: 'danger',  icon: '🔴' },
+  moving:  { label: 'En movimiento',          color: 'success' },
+  idle:    { label: 'Inactivo',               color: 'idle'    },
+  stopped: { label: 'Detenido por conductor', color: 'warning' },
+  alert:   { label: 'Alerta',                color: 'danger'  },
 }
 
 function formatTime(iso: string): string {
@@ -63,7 +63,7 @@ export function VehicleCard({ vehicle, isSelected, onClick, onDelete }: Props) {
       onClick={onClick}
     >
       <div className="vehicle-card__header">
-        <span className="vehicle-card__icon">{config.icon}</span>
+        <span className={`vehicle-card__dot vehicle-card__dot--${config.color}`} />
         <span className="vehicle-card__id">{vehicle.label}</span>
         <span className={`vehicle-card__badge vehicle-card__badge--${config.color}`}>
           {config.label}

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Truck, Bell, AlertTriangle, Clock } from 'lucide-react'
 import { useFleetStore } from '../../store/useFleetStore'
 import { VehicleCard } from './VehicleCard'
 import { ALERT_CONFIG } from '../../types'
@@ -47,14 +48,14 @@ export function VehiclePanel() {
           className={`panel-tab ${activeTab === 'fleet' ? 'panel-tab--active' : ''}`}
           onClick={() => setActiveTab('fleet')}
         >
-          🚛 Flota
+          <Truck size={14} /> Flota
           <span className="panel-tab__badge">{vehicleList.length}</span>
         </button>
         <button
           className={`panel-tab ${activeTab === 'alerts' ? 'panel-tab--active' : ''}`}
           onClick={() => setActiveTab('alerts')}
         >
-          🔔 Alertas
+          <Bell size={14} /> Alertas
           {newAlerts > 0 && (
             <span className="panel-tab__badge panel-tab__badge--danger">{newAlerts}</span>
           )}
@@ -64,7 +65,7 @@ export function VehiclePanel() {
       {/* Banner de alertas activas */}
       {alertCount > 0 && activeTab === 'fleet' && (
         <div className="vehicle-panel__alert-banner">
-          ⚠️ {alertCount} vehículo{alertCount > 1 ? 's' : ''} en alerta —{' '}
+          <AlertTriangle size={13} /> {alertCount} vehículo{alertCount > 1 ? 's' : ''} en alerta —{' '}
           <button className="banner-link" onClick={() => setActiveTab('alerts')}>
             ver alertas
           </button>
@@ -102,13 +103,13 @@ export function VehiclePanel() {
                   <div className="alert-item__icon">
                     {alert.type && ALERT_CONFIG[alert.type as AlertType]
                       ? ALERT_CONFIG[alert.type as AlertType].icon
-                      : '⚠️'}
+                      : <AlertTriangle size={14} />}
                   </div>
                   <div className="alert-item__body">
                     <div className="alert-item__vehicle">{alert.vehicle_id}</div>
                     <div className="alert-item__message">{alert.message}</div>
                     <div className="alert-item__time">
-                      🕐 {formatDateTime(alert.timestamp)}
+                      <Clock size={11} /> {formatDateTime(alert.timestamp)}
                     </div>
                   </div>
                 </li>

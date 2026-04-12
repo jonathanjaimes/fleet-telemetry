@@ -29,11 +29,17 @@ function formatDuration(startedAt: string): string {
   return `${h}:${m}:${s}`
 }
 
+const ALERT_ICONS: Record<LocalAlert['type'], { name: React.ComponentProps<typeof Ionicons>['name']; color: string }> = {
+  PANIC_BUTTON:    { name: 'warning',         color: '#ef4444' },
+  CONNECTION_LOST: { name: 'wifi-outline',    color: '#f59e0b' },
+  VEHICLE_STOPPED: { name: 'time-outline',    color: '#3b82f6' },
+}
+
 function AlertItem({ alert }: { alert: LocalAlert }) {
-  const icons = { PANIC_BUTTON: '🚨', CONNECTION_LOST: '📡', VEHICLE_STOPPED: '⚠️' }
+  const icon = ALERT_ICONS[alert.type]
   return (
     <View style={styles.alertItem}>
-      <Text style={styles.alertIcon}>{icons[alert.type]}</Text>
+      <Ionicons name={icon.name} size={18} color={icon.color} />
       <View style={styles.alertBody}>
         <Text style={styles.alertMessage}>{alert.message}</Text>
         <Text style={styles.alertTime}>{formatTime(alert.timestamp)}</Text>
@@ -75,7 +81,9 @@ function LoginScreen({ onLogin }: { onLogin: (id: string) => void }) {
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.loginBox}>
-            <Text style={styles.loginLogo}>🚛</Text>
+            <View style={styles.loginLogo}>
+              <MaterialIcons name="local-shipping" size={56} color="#3b82f6" />
+            </View>
             <Text style={styles.loginTitle}>Fleet Telemetría</Text>
             <Text style={styles.loginSubtitle}>Ingresa tu ID de conductor</Text>
 
@@ -108,12 +116,12 @@ function LoginScreen({ onLogin }: { onLogin: (id: string) => void }) {
   )
 }
 
-const PANIC_OPTIONS = [
-  { type: 'PANIC_ACCIDENT',   label: '🚨 Accidente' },
-  { type: 'PANIC_ROBBERY',    label: '🔫 Robo / Asalto' },
-  { type: 'PANIC_MEDICAL',    label: '🚑 Emergencia médica' },
-  { type: 'PANIC_MECHANICAL', label: '⚠️ Falla mecánica' },
-  { type: 'PANIC_OTHER',      label: '🆘 Otra emergencia' },
+const PANIC_OPTIONS: { type: string; label: string; icon: React.ComponentProps<typeof Ionicons>['name'] }[] = [
+  { type: 'PANIC_ACCIDENT',   label: 'Accidente',          icon: 'car-outline'          },
+  { type: 'PANIC_ROBBERY',    label: 'Robo / Asalto',      icon: 'shield-outline'       },
+  { type: 'PANIC_MEDICAL',    label: 'Emergencia médica',  icon: 'medkit-outline'       },
+  { type: 'PANIC_MECHANICAL', label: 'Falla mecánica',     icon: 'construct-outline'    },
+  { type: 'PANIC_OTHER',      label: 'Otra emergencia',    icon: 'help-circle-outline'  },
 ]
 
 // ─── Pantalla principal ───────────────────────────────────────────────────────
@@ -150,7 +158,10 @@ function TelemetryScreen({ driverId, onLogout }: { driverId: string; onLogout: (
   if (hasPermission === false) {
     return (
       <SafeAreaView style={styles.container}>
-        <Text style={styles.errorText}>⚠️ Se requiere permiso de ubicación para esta app.</Text>
+        <View style={{ alignItems: 'center', gap: 8, padding: 20 }}>
+          <Ionicons name="location-outline" size={40} color="#ef4444" />
+          <Text style={styles.errorText}>Se requiere permiso de ubicación para esta app.</Text>
+        </View>
       </SafeAreaView>
     )
   }
@@ -262,7 +273,8 @@ function TelemetryScreen({ driverId, onLogout }: { driverId: string; onLogout: (
       <Modal visible={panicModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>🚨 ¿Qué está pasando?</Text>
+            <Ionicons name="warning" size={32} color="#ef4444" style={{ alignSelf: 'center', marginBottom: 8 }} />
+            <Text style={styles.modalTitle}>¿Qué está pasando?</Text>
             <Text style={styles.modalSubtitle}>Selecciona el tipo de emergencia</Text>
             {PANIC_OPTIONS.map((opt) => (
               <TouchableOpacity
@@ -270,6 +282,7 @@ function TelemetryScreen({ driverId, onLogout }: { driverId: string; onLogout: (
                 style={styles.panicOption}
                 onPress={() => handleSelectPanic(opt.type)}
               >
+                <Ionicons name={opt.icon} size={18} color="#e2e8f0" />
                 <Text style={styles.panicOptionText}>{opt.label}</Text>
               </TouchableOpacity>
             ))}
@@ -340,7 +353,7 @@ const styles = StyleSheet.create({
   errorText:      { color: '#ef4444', textAlign: 'center', marginTop: 40, fontSize: 16, padding: 20 },
 
   loginBox:       { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
-  loginLogo:      { fontSize: 56, marginBottom: 8 },
+  loginLogo:      { marginBottom: 8 },
   loginTitle:     { color: '#e2e8f0', fontSize: 24, fontWeight: '700', marginBottom: 4 },
   loginSubtitle:  { color: '#64748b', fontSize: 14, marginBottom: 32 },
   loginInput:     { width: '100%', backgroundColor: '#1a1d27', borderWidth: 1, borderColor: '#2a2d3e', borderRadius: 10, padding: 16, color: '#e2e8f0', fontSize: 18, fontWeight: '700', textAlign: 'center', letterSpacing: 2, marginBottom: 12 },
@@ -377,8 +390,7 @@ const styles = StyleSheet.create({
   alertsTitle:    { color: '#64748b', fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 },
   alertsList:     { flex: 1 },
   noAlerts:       { color: '#64748b', fontSize: 14, textAlign: 'center', marginTop: 16 },
-  alertItem:      { flexDirection: 'row', backgroundColor: '#1a1d27', borderRadius: 8, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: '#2a2d3e', gap: 10 },
-  alertIcon:      { fontSize: 18 },
+  alertItem:      { flexDirection: 'row', alignItems: 'flex-start', backgroundColor: '#1a1d27', borderRadius: 8, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: '#2a2d3e', gap: 10 },
   alertBody:      { flex: 1 },
   alertMessage:   { color: '#e2e8f0', fontSize: 13, marginBottom: 4 },
   alertTime:      { color: '#64748b', fontSize: 11 },
@@ -391,8 +403,8 @@ const styles = StyleSheet.create({
   modalBox:       { backgroundColor: '#1a1d27', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 36 },
   modalTitle:     { color: '#e2e8f0', fontSize: 20, fontWeight: '800', textAlign: 'center', marginBottom: 4 },
   modalSubtitle:  { color: '#64748b', fontSize: 13, textAlign: 'center', marginBottom: 20 },
-  panicOption:    { backgroundColor: '#0f1117', borderWidth: 1, borderColor: '#2a2d3e', borderRadius: 12, padding: 16, marginBottom: 10 },
-  panicOptionText:{ color: '#e2e8f0', fontSize: 16, fontWeight: '600', textAlign: 'center' },
+  panicOption:    { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#0f1117', borderWidth: 1, borderColor: '#2a2d3e', borderRadius: 12, padding: 16, marginBottom: 10 },
+  panicOptionText:{ color: '#e2e8f0', fontSize: 16, fontWeight: '600' },
   modalCancel:    { marginTop: 6, padding: 14, alignItems: 'center' },
   modalCancelText:{ color: '#64748b', fontSize: 15 },
 })

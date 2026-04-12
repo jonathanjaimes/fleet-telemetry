@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Truck } from 'lucide-react'
 import { useAuthStore } from '../store/useAuthStore'
 import { VehiclePanel } from '../features/vehicles/VehiclePanel'
 import { FleetMap } from '../features/map/FleetMap'
@@ -56,7 +57,7 @@ export function FleetPage() {
   return (
     <div className="app">
       <header className="app-header">
-        <span>🚛</span>
+        <Truck size={20} strokeWidth={1.5} />
         <h1>Fleet Telemetry</h1>
         <nav className="app-header__nav">
           <button

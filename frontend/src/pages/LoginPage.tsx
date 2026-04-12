@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Truck } from 'lucide-react'
 import { useAuthStore } from '../store/useAuthStore'
 import './LoginPage.css'
 
@@ -42,7 +43,7 @@ export function LoginPage() {
   return (
     <div className="login-page">
       <div className="login-card">
-        <div className="login-card__logo">🚛</div>
+        <div className="login-card__logo"><Truck size={40} strokeWidth={1.5} /></div>
         <h1 className="login-card__title">Fleet Telemetry</h1>
         <p className="login-card__subtitle">Ingresa tu ID único para acceder</p>
 

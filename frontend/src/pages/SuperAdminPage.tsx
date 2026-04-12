@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Truck } from 'lucide-react'
 import { useAuthStore } from '../store/useAuthStore'
 import './AdminPage.css'
 
@@ -46,7 +47,7 @@ export function SuperAdminPage() {
     <div className="admin-page">
       <header className="admin-header">
         <div className="admin-header__left">
-          <span>🚛</span>
+          <Truck size={20} strokeWidth={1.5} />
           <h1>Fleet Telemetry</h1>
           <span className="admin-header__badge admin-header__badge--super">Superadmin</span>
         </div>
