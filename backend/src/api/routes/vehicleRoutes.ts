@@ -5,6 +5,7 @@ import { PgVehicleRepository } from '../../infrastructure/db/PgVehicleRepository
 import { PgAlertRepository } from '../../infrastructure/db/PgAlertRepository'
 import { DeleteVehicleUseCase } from '../../application/delete-vehicle/DeleteVehicleUseCase'
 import { emitAlert, emitVehicleStatus, emitVehicleDeleted } from '../../infrastructure/websocket/socketServer'
+import { setManualStop, clearManualStop } from '../../infrastructure/cache/redisClient'
 
 export const vehicleRouter = Router()
 
@@ -25,6 +26,7 @@ vehicleRouter.post('/:id/stop', async (req: Request, res: Response) => {
     return
   }
   await vehicleRepo.upsert({ ...existing, status: 'stopped' })
+  await setManualStop(vehicle_id)
   emitVehicleStatus(vehicle_id, 'stopped')
   res.json({ message: 'Vehicle marked as stopped' })
 })

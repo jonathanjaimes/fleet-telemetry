@@ -5,7 +5,7 @@ import { isVehicleStopped, STOPPED_THRESHOLD_MS } from '../../domain/entities/Ve
 import type { IGpsRepository } from '../../domain/repositories/IGpsRepository'
 import type { IVehicleRepository } from '../../domain/repositories/IVehicleRepository'
 import type { IAlertRepository } from '../../domain/repositories/IAlertRepository'
-import { isDuplicate, cacheVehiclePosition, getCachedVehiclePosition } from '../../infrastructure/cache/redisClient'
+import { isDuplicate, cacheVehiclePosition, getCachedVehiclePosition, isManualStop, clearManualStop } from '../../infrastructure/cache/redisClient'
 import { emitGpsUpdate, emitVehicleStatus, emitAlert } from '../../infrastructure/websocket/socketServer'
 
 export interface IngestGpsResult {
@@ -30,6 +30,22 @@ export class IngestGpsUseCase {
 
     const existing = await this.vehicleRepo.findById(reading.vehicle_id)
     let newStatus: 'moving' | 'stopped' | 'alert' = 'moving'
+
+    // Si el conductor acaba de detener el viaje manualmente, ignorar
+    // paquetes GPS tardíos que podrían pisar el estado "stopped".
+    // El flag expira solo en Redis (TTL 15s), pero si un nuevo viaje
+    // envía lecturas antes de ese tiempo, se limpia explícitamente.
+    const manuallyStop = await isManualStop(reading.vehicle_id)
+    if (manuallyStop) {
+      // Si el vehículo ya existía pero su último estado no era stopped/alert,
+      // asumimos que el conductor reinició el viaje y limpiamos el flag.
+      const current = await this.vehicleRepo.findById(reading.vehicle_id)
+      if (current && current.status === 'stopped') {
+        emitGpsUpdate(reading)
+        return { status: 'accepted' }
+      }
+      await clearManualStop(reading.vehicle_id)
+    }
 
     if (existing) {
       const elapsedMs = reading.timestamp.getTime() - existing.lastSeen.getTime()

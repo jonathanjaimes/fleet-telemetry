@@ -14,7 +14,8 @@ export function useTelemetry() {
   const [alerts, setAlerts]           = useState<LocalAlert[]>([])
   const [hasPermission, setPermission] = useState<boolean | null>(null)
 
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const intervalRef  = useRef<ReturnType<typeof setInterval> | null>(null)
+  const stoppingRef  = useRef(false)
 
   // Solicitar permisos de GPS al montar
   useEffect(() => {
@@ -35,11 +36,14 @@ export function useTelemetry() {
     if (!trip.isActive || !hasPermission) return
 
     const tick = async () => {
+      if (stoppingRef.current) return
       try {
         setStatus('sending')
         const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High })
         const { latitude: lat, longitude: lng } = loc.coords
         setLocation({ lat, lng })
+
+        if (stoppingRef.current) return
 
         const result = await sendGpsReading({
           vehicle_id: VEHICLE_ID,
@@ -71,17 +75,21 @@ export function useTelemetry() {
   }, [trip.isActive, hasPermission, addAlert])
 
   const startTrip = useCallback(() => {
+    stoppingRef.current = false
     setTrip({ isActive: true, startedAt: new Date().toISOString(), vehicleId: VEHICLE_ID })
     setStatus('connected')
   }, [])
 
   const stopTrip = useCallback(() => {
+    stoppingRef.current = true
+    if (intervalRef.current) clearInterval(intervalRef.current)
     setTrip((prev) => {
       sendTripStop(prev.vehicleId)
       return { ...prev, isActive: false }
     })
     setStatus('disconnected')
-    if (intervalRef.current) clearInterval(intervalRef.current)
+    // Reset después de que el backend haya procesado el flag
+    setTimeout(() => { stoppingRef.current = false }, 3000)
   }, [])
 
   const triggerPanic = useCallback(async () => {

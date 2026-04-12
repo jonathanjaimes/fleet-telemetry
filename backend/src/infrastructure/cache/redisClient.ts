@@ -45,3 +45,19 @@ export async function getCachedVehiclePosition(
 export async function deleteCachedVehicle(vehicle_id: string): Promise<void> {
   await redisClient.del(`vehicle:${vehicle_id}`)
 }
+
+// Flag de parada manual: bloquea que un GPS tardío pise el estado "stopped"
+const MANUAL_STOP_TTL_SECONDS = 15
+
+export async function setManualStop(vehicle_id: string): Promise<void> {
+  await redisClient.setEx(`manual_stop:${vehicle_id}`, MANUAL_STOP_TTL_SECONDS, '1')
+}
+
+export async function isManualStop(vehicle_id: string): Promise<boolean> {
+  const val = await redisClient.get(`manual_stop:${vehicle_id}`)
+  return val === '1'
+}
+
+export async function clearManualStop(vehicle_id: string): Promise<void> {
+  await redisClient.del(`manual_stop:${vehicle_id}`)
+}
