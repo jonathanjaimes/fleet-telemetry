@@ -40,6 +40,12 @@ export function FleetPage() {
     if (view === 'drivers') fetchDrivers()
   }, [view])
 
+  const deleteDriver = async (uniqueId: string) => {
+    if (!window.confirm(`¿Eliminar conductor ${uniqueId}?`)) return
+    await fetch(`${BACKEND}/api/users/drivers/${uniqueId}`, { method: 'DELETE', headers })
+    await fetchDrivers()
+  }
+
   const createDriver = async () => {
     setCreating(true)
     const res = await fetch(`${BACKEND}/api/users/drivers`, { method: 'POST', headers })
@@ -98,6 +104,7 @@ export function FleetPage() {
                     <tr>
                       <th>ID Único (compartir con conductor)</th>
                       <th>Fecha creación</th>
+                      <th></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -105,6 +112,13 @@ export function FleetPage() {
                       <tr key={d.id}>
                         <td><code className="uid-code uid-code--driver">{d.unique_id}</code></td>
                         <td>{new Date(d.created_at).toLocaleString('es-CO')}</td>
+                        <td>
+                          <button
+                            className="table-delete-btn"
+                            onClick={() => deleteDriver(d.unique_id)}
+                            title="Eliminar"
+                          >✕</button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

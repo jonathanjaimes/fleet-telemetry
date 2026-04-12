@@ -9,7 +9,7 @@ const INGEST_PATH = '/api/gps/ingest'
 
 const VEHICLES: Array<{ id: string; route: [number, number][] }> = [
   {
-    id: 'truck-01',
+    id: 'SIM-truck-01',
     route: [
       [4.6097, -74.0817], [4.6112, -74.0834], [4.6128, -74.0851],
       [4.6145, -74.0868], [4.6162, -74.0885], [4.6178, -74.0901],
@@ -18,7 +18,7 @@ const VEHICLES: Array<{ id: string; route: [number, number][] }> = [
     ],
   },
   {
-    id: 'truck-02',
+    id: 'SIM-truck-02',
     route: [
       [4.6712, -74.0534], [4.6728, -74.0551], [4.6745, -74.0568],
       [4.6761, -74.0584], [4.6778, -74.0601], [4.6794, -74.0617],
@@ -27,7 +27,7 @@ const VEHICLES: Array<{ id: string; route: [number, number][] }> = [
     ],
   },
   {
-    id: 'truck-03',
+    id: 'SIM-truck-03',
     route: [
       [4.7110, -74.0721], [4.7095, -74.0738], [4.7080, -74.0755],
       [4.7065, -74.0772], [4.7050, -74.0789], [4.7035, -74.0806],
@@ -36,7 +36,7 @@ const VEHICLES: Array<{ id: string; route: [number, number][] }> = [
     ],
   },
   {
-    id: 'truck-04',
+    id: 'SIM-truck-04',
     route: [
       [4.6341, -74.1123], [4.6358, -74.1107], [4.6375, -74.1091],
       [4.6392, -74.1075], [4.6409, -74.1059], [4.6426, -74.1043],
@@ -45,7 +45,7 @@ const VEHICLES: Array<{ id: string; route: [number, number][] }> = [
     ],
   },
   {
-    id: 'truck-05',
+    id: 'SIM-truck-05',
     route: [
       [4.6532, -74.0631], [4.6548, -74.0648], [4.6564, -74.0665],
       [4.6580, -74.0682], [4.6596, -74.0699], [4.6612, -74.0716],

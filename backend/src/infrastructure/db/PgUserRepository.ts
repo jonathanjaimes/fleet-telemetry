@@ -46,4 +46,8 @@ export class PgUserRepository implements IUserRepository {
     const res = await pgPool.query('SELECT 1 FROM users WHERE unique_id = $1', [unique_id])
     return res.rows.length > 0
   }
+
+  async delete(id: string): Promise<void> {
+    await pgPool.query('DELETE FROM users WHERE id = $1', [id])
+  }
 }

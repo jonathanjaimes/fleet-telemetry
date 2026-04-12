@@ -173,6 +173,21 @@
   color: #22c55e;
 }
 
+.table-delete-btn {
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  transition: background 0.15s, color 0.15s;
+}
+.table-delete-btn:hover {
+  background: rgba(239,68,68,0.15);
+  color: var(--color-danger);
+}
+
 /* Nav buttons en el header del FleetPage */
 .app-header__nav {
   display: flex;

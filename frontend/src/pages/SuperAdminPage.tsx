@@ -29,6 +29,12 @@ export function SuperAdminPage() {
 
   useEffect(() => { fetchFleet() }, [])
 
+  const deleteFleetUser = async (uniqueId: string) => {
+    if (!window.confirm(`¿Eliminar usuario flota ${uniqueId}?`)) return
+    await fetch(`${BACKEND}/api/users/fleet/${uniqueId}`, { method: 'DELETE', headers })
+    await fetchFleet()
+  }
+
   const createFleetUser = async () => {
     setCreating(true)
     const res = await fetch(`${BACKEND}/api/users/fleet`, { method: 'POST', headers })
@@ -70,6 +76,7 @@ export function SuperAdminPage() {
                   <tr>
                     <th>ID Único</th>
                     <th>Fecha creación</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -77,6 +84,13 @@ export function SuperAdminPage() {
                     <tr key={u.id}>
                       <td><code className="uid-code">{u.unique_id}</code></td>
                       <td>{new Date(u.created_at).toLocaleString('es-CO')}</td>
+                      <td>
+                        <button
+                          className="table-delete-btn"
+                          onClick={() => deleteFleetUser(u.unique_id)}
+                          title="Eliminar"
+                        >✕</button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

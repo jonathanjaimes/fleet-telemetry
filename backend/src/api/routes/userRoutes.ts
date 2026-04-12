@@ -50,6 +50,18 @@ userRouter.post('/fleet', async (req: Request, res: Response) => {
   res.status(201).json(user)
 })
 
+// SUPERADMIN: eliminar usuario flota
+userRouter.delete('/fleet/:id', async (req: Request, res: Response) => {
+  if (!await requireRole(req, res, ['superadmin'])) return
+  const target = await userRepo.findByUniqueId(req.params.id)
+  if (!target || target.role !== 'fleet') {
+    res.status(404).json({ error: 'Usuario flota no encontrado' })
+    return
+  }
+  await userRepo.delete(target.id)
+  res.json({ message: 'Usuario flota eliminado' })
+})
+
 // FLEET: listar y crear usuarios conductor (drivers)
 userRouter.get('/drivers', async (req: Request, res: Response) => {
   if (!await requireRole(req, res, ['fleet'])) return
@@ -78,4 +90,18 @@ userRouter.post('/drivers', async (req: Request, res: Response) => {
     created_by: caller!.id,
   })
   res.status(201).json(user)
+})
+
+// FLEET: eliminar conductor
+userRouter.delete('/drivers/:id', async (req: Request, res: Response) => {
+  if (!await requireRole(req, res, ['fleet'])) return
+  const callerId = (req.headers['x-user-id'] as string).toUpperCase()
+  const caller   = await userRepo.findByUniqueId(callerId)
+  const target   = await userRepo.findByUniqueId(req.params.id)
+  if (!target || target.role !== 'driver' || target.created_by !== caller!.id) {
+    res.status(404).json({ error: 'Conductor no encontrado o sin permisos' })
+    return
+  }
+  await userRepo.delete(target.id)
+  res.json({ message: 'Conductor eliminado' })
 })

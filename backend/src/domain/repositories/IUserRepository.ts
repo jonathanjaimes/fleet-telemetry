@@ -7,4 +7,5 @@ export interface IUserRepository {
   findByCreator(creator_id: string): Promise<User[]>
   create(user: Omit<User, 'created_at'>): Promise<User>
   exists(unique_id: string): Promise<boolean>
+  delete(id: string): Promise<void>
 }
