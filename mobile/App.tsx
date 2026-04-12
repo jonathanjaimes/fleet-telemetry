@@ -12,9 +12,9 @@ import { saveSession, loadSession, clearSession } from './src/services/authStora
 import type { LocalAlert } from './src/types'
 
 const STATUS_CONFIG = {
-  connected:    { label: 'Conectado',    color: '#22c55e', dot: '●' },
-  disconnected: { label: 'Desconectado', color: '#ef4444', dot: '○' },
-  sending:      { label: 'Enviando...',  color: '#f59e0b', dot: '●' },
+  connected:    { label: 'Conectado',    color: '#22c55e' },
+  disconnected: { label: 'Desconectado', color: '#ef4444' },
+  sending:      { label: 'Enviando...',  color: '#f59e0b' },
 }
 
 function formatTime(iso: string): string {

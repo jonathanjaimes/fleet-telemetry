@@ -16,10 +16,10 @@ const STATUS_COLORS: Record<Vehicle['status'], string> = {
 }
 
 const STATUS_LABELS: Record<Vehicle['status'], string> = {
-  moving:  '🟢 En movimiento',
-  idle:    '🔵 Inactivo',
-  stopped: '🟡 Detenido por conductor',
-  alert:   '🔴 Alerta',
+  moving:  'En movimiento',
+  idle:    'Inactivo',
+  stopped: 'Detenido por conductor',
+  alert:   'Alerta',
 }
 
 function formatTime(iso: string): string {

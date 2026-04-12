@@ -57,7 +57,7 @@ export function VehiclePanel() {
       {/* Header */}
       <div className="vehicle-panel__header">
         <div className={`vehicle-panel__conn ${isConnected ? 'vehicle-panel__conn--on' : 'vehicle-panel__conn--off'}`}>
-          {isConnected ? '● Conectado' : '○ Desconectado'}
+          {isConnected ? 'Conectado' : 'Desconectado'}
         </div>
       </div>
 
