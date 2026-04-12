@@ -18,6 +18,12 @@ vehicleRouter.get('/', async (_req: Request, res: Response) => {
   res.json(vehicles)
 })
 
+vehicleRouter.post('/:id/start', async (req: Request, res: Response) => {
+  const vehicle_id = String(req.params.id)
+  await clearManualStop(vehicle_id)
+  res.json({ message: 'Vehicle trip started' })
+})
+
 vehicleRouter.post('/:id/stop', async (req: Request, res: Response) => {
   const vehicle_id = String(req.params.id)
   const existing = await vehicleRepo.findById(vehicle_id)

@@ -43,6 +43,14 @@ export async function sendGpsReading(payload: GpsPayload): Promise<'accepted' | 
   }
 }
 
+export async function sendTripStart(vehicle_id: string): Promise<void> {
+  try {
+    await client.post(`/api/vehicles/${vehicle_id}/start`)
+  } catch {
+    // No crítico: el flag expira solo en Redis tras 15s
+  }
+}
+
 export async function sendTripStop(vehicle_id: string): Promise<void> {
   try {
     await client.post(`/api/vehicles/${vehicle_id}/stop`)

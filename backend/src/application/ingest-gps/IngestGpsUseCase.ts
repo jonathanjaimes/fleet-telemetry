@@ -33,18 +33,12 @@ export class IngestGpsUseCase {
 
     // Si el conductor acaba de detener el viaje manualmente, ignorar
     // paquetes GPS tardíos que podrían pisar el estado "stopped".
-    // El flag expira solo en Redis (TTL 15s), pero si un nuevo viaje
-    // envía lecturas antes de ese tiempo, se limpia explícitamente.
+    // El flag se limpia explícitamente con POST /vehicles/:id/start
+    // o expira solo por TTL de Redis (15s).
     const manuallyStop = await isManualStop(reading.vehicle_id)
     if (manuallyStop) {
-      // Si el vehículo ya existía pero su último estado no era stopped/alert,
-      // asumimos que el conductor reinició el viaje y limpiamos el flag.
-      const current = await this.vehicleRepo.findById(reading.vehicle_id)
-      if (current && current.status === 'stopped') {
-        emitGpsUpdate(reading)
-        return { status: 'accepted' }
-      }
-      await clearManualStop(reading.vehicle_id)
+      emitGpsUpdate(reading)
+      return { status: 'accepted' }
     }
 
     if (existing) {

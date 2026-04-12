@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import * as Location from 'expo-location'
-import { sendGpsReading, sendPanicAlert, sendTripStop } from '../services/api'
+import { sendGpsReading, sendPanicAlert, sendTripStart, sendTripStop } from '../services/api'
 import { saveAlert, getAlerts } from '../services/alertStorage'
 import type { ConnectionStatus, LocalAlert, TripState } from '../types'
 
@@ -76,6 +76,7 @@ export function useTelemetry() {
 
   const startTrip = useCallback(() => {
     stoppingRef.current = false
+    sendTripStart(VEHICLE_ID)
     setTrip({ isActive: true, startedAt: new Date().toISOString(), vehicleId: VEHICLE_ID })
     setStatus('connected')
   }, [])
