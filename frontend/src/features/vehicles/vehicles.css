@@ -165,6 +165,13 @@
   min-width: 0;
 }
 
+.alert-item__type {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-danger);
+  margin-bottom: 2px;
+}
+
 .alert-item__vehicle {
   font-size: 0.8rem;
   font-weight: 700;
@@ -235,6 +242,17 @@
 .vehicle-card__badge--idle    { background: rgba(96,165,250,0.2);  color: var(--color-idle);    }
 .vehicle-card__badge--warning { background: rgba(245,158,11,0.2);  color: var(--color-warning); }
 .vehicle-card__badge--danger  { background: rgba(239,68,68,0.2);   color: var(--color-danger);  }
+
+.vehicle-card__alert-type {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-danger);
+  background: rgba(239,68,68,0.1);
+  border-radius: 4px;
+  padding: 0.15rem 0.4rem;
+  margin-bottom: 0.3rem;
+  display: inline-block;
+}
 
 .vehicle-card__meta {
   display: flex;

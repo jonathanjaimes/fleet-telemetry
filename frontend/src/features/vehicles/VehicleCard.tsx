@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { Vehicle } from '../../types'
+import { ALERT_CONFIG } from '../../types'
 import './vehicles.css'
 
 interface Props {
@@ -69,10 +70,18 @@ export function VehicleCard({ vehicle, isSelected, onClick, onDelete }: Props) {
           </div>
         </div>
       ) : (
-        <div className="vehicle-card__meta">
-          <span>{vehicle.lat.toFixed(4)}, {vehicle.lng.toFixed(4)}</span>
-          <span>{formatTime(vehicle.lastSeen)}</span>
-        </div>
+        <>
+          {vehicle.status === 'alert' && vehicle.lastAlertType && (
+            <div className="vehicle-card__alert-type">
+              {ALERT_CONFIG[vehicle.lastAlertType].icon}{' '}
+              {ALERT_CONFIG[vehicle.lastAlertType].label}
+            </div>
+          )}
+          <div className="vehicle-card__meta">
+            <span>{vehicle.lat.toFixed(4)}, {vehicle.lng.toFixed(4)}</span>
+            <span>{formatTime(vehicle.lastSeen)}</span>
+          </div>
+        </>
       )}
     </div>
   )

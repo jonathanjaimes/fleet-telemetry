@@ -59,9 +59,14 @@ export async function sendTripStop(vehicle_id: string): Promise<void> {
   }
 }
 
-export async function sendPanicAlert(vehicle_id: string, lat: number, lng: number): Promise<boolean> {
+export async function sendPanicAlert(
+  vehicle_id: string,
+  lat: number,
+  lng: number,
+  panicType: string,
+): Promise<boolean> {
   try {
-    await client.post(`/api/vehicles/${vehicle_id}/panic`, { lat, lng })
+    await client.post(`/api/vehicles/${vehicle_id}/panic`, { lat, lng, panicType })
     return true
   } catch {
     return false

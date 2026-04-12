@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   StyleSheet, SafeAreaView, StatusBar, Alert, ActivityIndicator,
-  KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard,
+  KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, Modal,
 } from 'react-native'
 import { useTelemetry } from './src/hooks/useTelemetry'
 import { loginDriver } from './src/services/api'
@@ -106,11 +106,20 @@ function LoginScreen({ onLogin }: { onLogin: (id: string) => void }) {
   )
 }
 
+const PANIC_OPTIONS = [
+  { type: 'PANIC_ACCIDENT',   label: '🚨 Accidente' },
+  { type: 'PANIC_ROBBERY',    label: '🔫 Robo / Asalto' },
+  { type: 'PANIC_MEDICAL',    label: '🚑 Emergencia médica' },
+  { type: 'PANIC_MECHANICAL', label: '⚠️ Falla mecánica' },
+  { type: 'PANIC_OTHER',      label: '🆘 Otra emergencia' },
+]
+
 // ─── Pantalla principal ───────────────────────────────────────────────────────
 function TelemetryScreen({ driverId, onLogout }: { driverId: string; onLogout: () => void }) {
   const { status, location, trip, alerts, hasPermission, startTrip, stopTrip, triggerPanic } =
     useTelemetry(driverId)
-  const [, forceRender] = useState(0)
+  const [, forceRender]     = useState(0)
+  const [panicModal, setPanicModal] = useState(false)
   const cfg = STATUS_CONFIG[status]
 
   const handleLogout = () => {
@@ -124,11 +133,11 @@ function TelemetryScreen({ driverId, onLogout }: { driverId: string; onLogout: (
     ])
   }
 
-  const handlePanic = () => {
-    Alert.alert('⚠️ Botón de Pánico', '¿Confirmas que necesitas ayuda?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Enviar Alerta', style: 'destructive', onPress: triggerPanic },
-    ])
+  const handlePanic = () => setPanicModal(true)
+
+  const handleSelectPanic = (panicType: string) => {
+    setPanicModal(false)
+    triggerPanic(panicType)
   }
 
   if (hasPermission === null) {
@@ -216,6 +225,28 @@ function TelemetryScreen({ driverId, onLogout }: { driverId: string; onLogout: (
           }
         </ScrollView>
       </View>
+
+      {/* Modal de tipo de pánico */}
+      <Modal visible={panicModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>🚨 ¿Qué está pasando?</Text>
+            <Text style={styles.modalSubtitle}>Selecciona el tipo de emergencia</Text>
+            {PANIC_OPTIONS.map((opt) => (
+              <TouchableOpacity
+                key={opt.type}
+                style={styles.panicOption}
+                onPress={() => handleSelectPanic(opt.type)}
+              >
+                <Text style={styles.panicOptionText}>{opt.label}</Text>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity style={styles.modalCancel} onPress={() => setPanicModal(false)}>
+              <Text style={styles.modalCancelText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   )
 }
@@ -304,4 +335,13 @@ const styles = StyleSheet.create({
   alertBody:      { flex: 1 },
   alertMessage:   { color: '#e2e8f0', fontSize: 13, marginBottom: 4 },
   alertTime:      { color: '#64748b', fontSize: 11 },
+
+  modalOverlay:   { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
+  modalBox:       { backgroundColor: '#1a1d27', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 36 },
+  modalTitle:     { color: '#e2e8f0', fontSize: 20, fontWeight: '800', textAlign: 'center', marginBottom: 4 },
+  modalSubtitle:  { color: '#64748b', fontSize: 13, textAlign: 'center', marginBottom: 20 },
+  panicOption:    { backgroundColor: '#0f1117', borderWidth: 1, borderColor: '#2a2d3e', borderRadius: 12, padding: 16, marginBottom: 10 },
+  panicOptionText:{ color: '#e2e8f0', fontSize: 16, fontWeight: '600', textAlign: 'center' },
+  modalCancel:    { marginTop: 6, padding: 14, alignItems: 'center' },
+  modalCancelText:{ color: '#64748b', fontSize: 15 },
 })

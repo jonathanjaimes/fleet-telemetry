@@ -72,9 +72,19 @@ export const useFleetStore = create<FleetState>((set) => ({
     }),
 
   addAlert: (alert) =>
-    set((state) => ({
-      alerts: [alert, ...state.alerts].slice(0, 50),
-    })),
+    set((state) => {
+      const vehicles = { ...state.vehicles }
+      if (alert.vehicle_id && vehicles[alert.vehicle_id]) {
+        vehicles[alert.vehicle_id] = {
+          ...vehicles[alert.vehicle_id],
+          lastAlertType: alert.type,
+        }
+      }
+      return {
+        alerts: [alert, ...state.alerts].slice(0, 50),
+        vehicles,
+      }
+    }),
 
   selectVehicle: (id) => set({ selectedVehicleId: id }),
 

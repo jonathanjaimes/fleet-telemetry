@@ -1,14 +1,11 @@
 import { useState } from 'react'
 import { useFleetStore } from '../../store/useFleetStore'
 import { VehicleCard } from './VehicleCard'
+import { ALERT_CONFIG } from '../../types'
+import type { AlertType } from '../../types'
 import './vehicles.css'
 
 type Tab = 'fleet' | 'alerts'
-
-const ALERT_ICONS: Record<string, string> = {
-  VEHICLE_STOPPED: '🟡',
-  PANIC_BUTTON:    '🚨',
-}
 
 function formatDateTime(iso: string): string {
   const d = new Date(iso)
@@ -103,10 +100,17 @@ export function VehiclePanel() {
               {alerts.map((alert) => (
                 <li key={alert.id} className="alert-item">
                   <div className="alert-item__icon">
-                    {ALERT_ICONS[alert.type ?? ''] ?? '⚠️'}
+                    {alert.type && ALERT_CONFIG[alert.type as AlertType]
+                      ? ALERT_CONFIG[alert.type as AlertType].icon
+                      : '⚠️'}
                   </div>
                   <div className="alert-item__body">
                     <div className="alert-item__vehicle">{alert.vehicle_id}</div>
+                    {alert.type && ALERT_CONFIG[alert.type as AlertType] && (
+                      <div className="alert-item__type">
+                        {ALERT_CONFIG[alert.type as AlertType].label}
+                      </div>
+                    )}
                     <div className="alert-item__message">{alert.message}</div>
                     <div className="alert-item__time">
                       🕐 {formatDateTime(alert.timestamp)}

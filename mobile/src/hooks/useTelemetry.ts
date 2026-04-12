@@ -122,12 +122,12 @@ export function useTelemetry(driverId: string) {
     setTimeout(() => { stoppingRef.current = false }, 3000)
   }, [])
 
-  const triggerPanic = useCallback(async () => {
+  const triggerPanic = useCallback(async (panicType: string) => {
     const lat = location?.lat ?? 0
     const lng = location?.lng ?? 0
-    const sent = await sendPanicAlert(VEHICLE_ID, lat, lng)
+    const sent = await sendPanicAlert(VEHICLE_ID, lat, lng, panicType)
     await addAlert({
-      message: sent ? '🚨 Botón de pánico activado — alerta enviada al servidor' : '🚨 Botón de pánico activado — sin conexión',
+      message: sent ? '🚨 Alerta de pánico enviada al servidor' : '🚨 Botón de pánico activado — sin conexión',
       timestamp: new Date().toISOString(),
       type: 'PANIC_BUTTON',
     })

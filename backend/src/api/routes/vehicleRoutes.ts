@@ -5,6 +5,8 @@ import { PgVehicleRepository } from '../../infrastructure/db/PgVehicleRepository
 import { PgAlertRepository } from '../../infrastructure/db/PgAlertRepository'
 import { DeleteVehicleUseCase } from '../../application/delete-vehicle/DeleteVehicleUseCase'
 import { emitAlert, emitVehicleStatus, emitVehicleDeleted } from '../../infrastructure/websocket/socketServer'
+import type { AlertType } from '../../domain/entities/Alert'
+import { PANIC_LABELS } from '../../domain/entities/Alert'
 import { setManualStop, clearManualStop, clearDeletedFlag, clearStoppedSince } from '../../infrastructure/cache/redisClient'
 
 export const vehicleRouter = Router()
@@ -48,17 +50,28 @@ vehicleRouter.post('/:id/stop', async (req: Request, res: Response) => {
   res.json({ message: 'Vehicle marked as stopped' })
 })
 
+const VALID_PANIC_TYPES: AlertType[] = [
+  'PANIC_ACCIDENT', 'PANIC_ROBBERY', 'PANIC_MEDICAL', 'PANIC_MECHANICAL', 'PANIC_OTHER',
+]
+
 vehicleRouter.post('/:id/panic', async (req: Request, res: Response) => {
   const vehicle_id = String(req.params.id)
+  const panicType: AlertType = VALID_PANIC_TYPES.includes(req.body.panicType)
+    ? req.body.panicType
+    : 'PANIC_OTHER'
+
   const alert = {
-    id: uuidv4(),
+    id:        uuidv4(),
     vehicle_id,
-    type: 'PANIC_BUTTON' as const,
-    message: '🚨 Botón de pánico activado por el conductor',
+    type:      panicType,
+    message:   PANIC_LABELS[panicType],
     timestamp: new Date(),
   }
   await alertRepo.save(alert)
-  await vehicleRepo.upsert({ id: vehicle_id, status: 'alert', lat: req.body.lat ?? 0, lng: req.body.lng ?? 0, lastSeen: new Date() })
+  await vehicleRepo.upsert({
+    id: vehicle_id, status: 'alert',
+    lat: req.body.lat ?? 0, lng: req.body.lng ?? 0, lastSeen: new Date(),
+  })
   emitAlert(alert)
   emitVehicleStatus(vehicle_id, 'alert')
   res.status(201).json({ message: 'Panic alert registered' })
