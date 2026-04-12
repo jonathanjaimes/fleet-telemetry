@@ -28,9 +28,6 @@ export function RouteMap({ points }: Props) {
         mapRef.current = null
       }
 
-      const mid = Math.floor(points.length / 2)
-      const center: [number, number] = [points[mid].lat, points[mid].lng]
-
       const map = L.map(containerRef.current, { zoomControl: true })
       mapRef.current = map
 
