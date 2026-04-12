@@ -1,11 +1,10 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { useFleetStore } from '../../store/useFleetStore'
 import type { Vehicle } from '../../types'
 import './map.css'
 
-// Bogotá como centro inicial
 const DEFAULT_CENTER: [number, number] = [4.7110, -74.0721]
 const DEFAULT_ZOOM = 13
 
@@ -32,10 +31,13 @@ function createMarkerIcon(color: string): L.DivIcon {
 }
 
 export function FleetMap() {
-  const mapRef      = useRef<L.Map | null>(null)
+  const mapRef       = useRef<L.Map | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const markersRef  = useRef<Record<string, L.Marker>>({})
+  const markersRef   = useRef<Record<string, L.Marker>>({})
   const polylinesRef = useRef<Record<string, L.Polyline>>({})
+
+  // Controla si el seguimiento automático está activo
+  const [isFollowing, setIsFollowing] = useState(false)
 
   const vehicles      = useFleetStore((s) => s.vehicles)
   const selectedId    = useFleetStore((s) => s.selectedVehicleId)
@@ -56,11 +58,22 @@ export function FleetMap() {
       maxZoom: 19,
     }).addTo(mapRef.current)
 
+    // Cuando el usuario interactúa con el mapa (zoom, drag) → pausar seguimiento
+    const pauseFollow = () => setIsFollowing(false)
+    mapRef.current.on('zoomstart', pauseFollow)
+    mapRef.current.on('dragstart', pauseFollow)
+
     return () => {
       mapRef.current?.remove()
       mapRef.current = null
     }
   }, [])
+
+  // Cuando se selecciona un vehículo → activar seguimiento automáticamente
+  useEffect(() => {
+    if (selectedId) setIsFollowing(true)
+    else setIsFollowing(false)
+  }, [selectedId])
 
   // Actualizar marcadores y rutas cuando cambian los vehículos
   useEffect(() => {
@@ -68,10 +81,9 @@ export function FleetMap() {
     if (!map) return
 
     Object.values(vehicles).forEach((vehicle) => {
-      const color = STATUS_COLORS[vehicle.status]
+      const color    = STATUS_COLORS[vehicle.status]
       const position: [number, number] = [vehicle.lat, vehicle.lng]
 
-      // Marcador
       if (markersRef.current[vehicle.id]) {
         markersRef.current[vehicle.id]
           .setLatLng(position)
@@ -81,40 +93,55 @@ export function FleetMap() {
           .addTo(map)
           .bindTooltip(vehicle.label, { permanent: false, direction: 'top' })
           .on('click', () => selectVehicle(vehicle.id))
-
         markersRef.current[vehicle.id] = marker
       }
 
-      // Polilínea de ruta
       if (polylinesRef.current[vehicle.id]) {
         polylinesRef.current[vehicle.id].setLatLngs(vehicle.route)
       } else {
-        const polyline = L.polyline(vehicle.route, {
-          color,
-          weight: 2,
-          opacity: 0.6,
-        }).addTo(map)
+        const polyline = L.polyline(vehicle.route, { color, weight: 2, opacity: 0.6 }).addTo(map)
         polylinesRef.current[vehicle.id] = polyline
       }
 
-      // Actualizar color de la ruta si cambió el estado
       polylinesRef.current[vehicle.id].setStyle({ color })
     })
   }, [vehicles, selectVehicle])
 
-  // Centrar mapa en vehículo seleccionado
+  // Seguir al vehículo seleccionado solo si el seguimiento está activo
   useEffect(() => {
+    const map = mapRef.current
+    if (!map || !selectedId || !isFollowing) return
+    const vehicle = vehicles[selectedId]
+    if (vehicle) {
+      map.setView([vehicle.lat, vehicle.lng], map.getZoom(), { animate: true })
+    }
+  }, [selectedId, vehicles, isFollowing])
+
+  const handleResumeFollow = useCallback(() => {
     const map = mapRef.current
     if (!map || !selectedId) return
     const vehicle = vehicles[selectedId]
     if (vehicle) {
       map.flyTo([vehicle.lat, vehicle.lng], 15, { duration: 0.8 })
+      setIsFollowing(true)
     }
   }, [selectedId, vehicles])
 
   return (
     <div className="fleet-map-wrapper">
       <div ref={containerRef} className="fleet-map" />
+
+      {selectedId && !isFollowing && (
+        <button className="follow-btn" onClick={handleResumeFollow}>
+          🎯 Seguir vehículo
+        </button>
+      )}
+
+      {selectedId && isFollowing && (
+        <div className="follow-indicator">
+          📍 Siguiendo {selectedId}
+        </div>
+      )}
     </div>
   )
 }
