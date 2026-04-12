@@ -61,3 +61,19 @@ export async function isManualStop(vehicle_id: string): Promise<boolean> {
 export async function clearManualStop(vehicle_id: string): Promise<void> {
   await redisClient.del(`manual_stop:${vehicle_id}`)
 }
+
+// Flag de vehículo eliminado: impide que GPS tardíos lo recreen en DB
+const DELETED_TTL_SECONDS = 30
+
+export async function setDeletedFlag(vehicle_id: string): Promise<void> {
+  await redisClient.setEx(`deleted:${vehicle_id}`, DELETED_TTL_SECONDS, '1')
+}
+
+export async function isDeletedFlag(vehicle_id: string): Promise<boolean> {
+  const val = await redisClient.get(`deleted:${vehicle_id}`)
+  return val === '1'
+}
+
+export async function clearDeletedFlag(vehicle_id: string): Promise<void> {
+  await redisClient.del(`deleted:${vehicle_id}`)
+}

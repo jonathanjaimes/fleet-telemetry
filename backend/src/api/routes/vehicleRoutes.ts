@@ -5,7 +5,7 @@ import { PgVehicleRepository } from '../../infrastructure/db/PgVehicleRepository
 import { PgAlertRepository } from '../../infrastructure/db/PgAlertRepository'
 import { DeleteVehicleUseCase } from '../../application/delete-vehicle/DeleteVehicleUseCase'
 import { emitAlert, emitVehicleStatus, emitVehicleDeleted } from '../../infrastructure/websocket/socketServer'
-import { setManualStop, clearManualStop } from '../../infrastructure/cache/redisClient'
+import { setManualStop, clearManualStop, clearDeletedFlag } from '../../infrastructure/cache/redisClient'
 
 export const vehicleRouter = Router()
 
@@ -21,6 +21,7 @@ vehicleRouter.get('/', async (_req: Request, res: Response) => {
 vehicleRouter.post('/:id/start', async (req: Request, res: Response) => {
   const vehicle_id = String(req.params.id)
   await clearManualStop(vehicle_id)
+  await clearDeletedFlag(vehicle_id)
   res.json({ message: 'Vehicle trip started' })
 })
 

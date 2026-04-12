@@ -5,7 +5,7 @@ import { isVehicleStopped, STOPPED_THRESHOLD_MS } from '../../domain/entities/Ve
 import type { IGpsRepository } from '../../domain/repositories/IGpsRepository'
 import type { IVehicleRepository } from '../../domain/repositories/IVehicleRepository'
 import type { IAlertRepository } from '../../domain/repositories/IAlertRepository'
-import { isDuplicate, cacheVehiclePosition, getCachedVehiclePosition, isManualStop, clearManualStop } from '../../infrastructure/cache/redisClient'
+import { isDuplicate, cacheVehiclePosition, getCachedVehiclePosition, isManualStop, clearManualStop, isDeletedFlag } from '../../infrastructure/cache/redisClient'
 import { emitGpsUpdate, emitVehicleStatus, emitAlert } from '../../infrastructure/websocket/socketServer'
 
 export interface IngestGpsResult {
@@ -20,6 +20,10 @@ export class IngestGpsUseCase {
   ) {}
 
   async execute(reading: GpsReading): Promise<IngestGpsResult> {
+    if (await isDeletedFlag(reading.vehicle_id)) {
+      return { status: 'duplicate' }
+    }
+
     const dupKey = buildDuplicateKey(reading)
     if (await isDuplicate(dupKey)) {
       return { status: 'duplicate' }
