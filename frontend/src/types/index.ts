@@ -20,6 +20,7 @@ export interface Vehicle {
 export interface Alert {
   id: string
   vehicle_id: string
+  type?: string
   message: string
   timestamp: string
 }
