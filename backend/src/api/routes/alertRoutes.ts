@@ -4,6 +4,7 @@ import { PgVehicleRepository } from '../../infrastructure/db/PgVehicleRepository
 import { PgUserRepository } from '../../infrastructure/db/PgUserRepository'
 import { PgRouteRepository } from '../../infrastructure/db/PgRouteRepository'
 import { emitAlertResolved, emitVehicleStatus } from '../../infrastructure/websocket/socketServer'
+import { setManualStop } from '../../infrastructure/cache/redisClient'
 
 export const alertRouter = Router()
 
@@ -45,6 +46,9 @@ alertRouter.patch('/:id/resolve', async (req, res) => {
   if (!uniqueId) return res.status(401).json({ error: 'No autorizado' })
 
   const { id } = req.params
+  // El operador puede optar por finalizar el viaje al resolver la alerta
+  const stopTrip = req.body?.stopTrip === true
+
   try {
     const result = await resolveUserAlerts(uniqueId)
     if (!result) return res.status(403).json({ error: 'Acceso no permitido' })
@@ -55,25 +59,32 @@ alertRouter.patch('/:id/resolve', async (req, res) => {
 
     await alertRepo.resolve(id)
 
-    // Si no quedan más alertas sin resolver para este vehículo, pasa a idle
+    // Determina nuevo estado del vehículo cuando no quedan alertas pendientes
     const remaining = (await alertRepo.findByVehicleIds([alert.vehicle_id]))
       .filter((a) => !a.resolved)
+
     if (remaining.length === 0) {
       const vehicle = await vehicleRepo.findById(alert.vehicle_id)
       if (vehicle && vehicle.status === 'alert') {
-        await vehicleRepo.updateStatus(alert.vehicle_id, 'idle')
-        emitVehicleStatus(alert.vehicle_id, 'idle')
-
-        // Solo cierra la ruta si la alerta fue de ausencia de movimiento
-        // (el conductor estaba genuinamente detenido, no es una alerta de pánico en marcha)
-        if (alert.type === 'VEHICLE_STOPPED') {
+        if (stopTrip) {
+          // El operador decidió finalizar el viaje explícitamente
+          await vehicleRepo.updateStatus(alert.vehicle_id, 'stopped')
+          await setManualStop(alert.vehicle_id)
           await routeRepo.endRoute(alert.vehicle_id)
+          emitVehicleStatus(alert.vehicle_id, 'stopped')
+        } else {
+          // Sin finalizar viaje: pasa a idle y solo cierra ruta para VEHICLE_STOPPED
+          await vehicleRepo.updateStatus(alert.vehicle_id, 'idle')
+          emitVehicleStatus(alert.vehicle_id, 'idle')
+          if (alert.type === 'VEHICLE_STOPPED') {
+            await routeRepo.endRoute(alert.vehicle_id)
+          }
         }
       }
     }
 
     emitAlertResolved(id, alert.vehicle_id, alert.type)
-    res.json({ ok: true })
+    res.json({ ok: true, stopped: stopTrip && remaining.length === 0 })
   } catch (err) {
     console.error('[Alerts] Error resolving alert:', err)
     res.status(500).json({ error: 'Error al resolver alerta' })

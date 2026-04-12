@@ -469,3 +469,41 @@
 }
 .resolve-modal__cancel:hover { background: var(--color-border); }
 
+/* Checkbox de finalizar viaje dentro del modal */
+.resolve-modal__stop-trip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--color-text);
+  cursor: pointer;
+  user-select: none;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.15s, background 0.15s;
+}
+.resolve-modal__stop-trip:hover {
+  border-color: var(--color-primary);
+  background: rgba(59, 130, 246, 0.06);
+}
+.resolve-modal__stop-trip input[type='checkbox'] {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--color-primary);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.resolve-modal__stop-hint {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  margin: 0;
+  line-height: 1.4;
+  text-align: left;
+  width: 100%;
+}
+.resolve-modal__stop-hint strong {
+  color: var(--color-danger);
+}

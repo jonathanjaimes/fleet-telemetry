@@ -20,8 +20,9 @@ function formatDateTime(iso: string): string {
 }
 
 export function VehiclePanel() {
-  const [activeTab, setActiveTab] = useState<Tab>('fleet')
+  const [activeTab, setActiveTab]     = useState<Tab>('fleet')
   const [confirmingId, setConfirmingId] = useState<string | null>(null)
+  const [endTrip, setEndTrip]           = useState(false)
 
   const vehicles      = useFleetStore((s) => s.vehicles)
   const alerts        = useFleetStore((s) => s.alerts)
@@ -43,13 +44,20 @@ export function VehiclePanel() {
 
   const handleResolve = async (id: string) => {
     const res = await fetch(`${BACKEND}/api/alerts/${id}/resolve`, {
-      method: 'PATCH',
-      headers: { 'x-user-id': user?.unique_id ?? '' },
+      method:  'PATCH',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': user?.unique_id ?? '' },
+      body:    JSON.stringify({ stopTrip: endTrip }),
     })
     if (!res.ok) return
     const alert = alerts.find((a) => a.id === id)
-    if (alert) resolveAlert(id, alert.vehicle_id, alert.type ?? '')
+    if (alert) resolveAlert(id, alert.vehicle_id, alert.type ?? '', endTrip ? 'stopped' : undefined)
     setConfirmingId(null)
+    setEndTrip(false)
+  }
+
+  const openConfirmModal = (id: string) => {
+    setConfirmingId(id)
+    setEndTrip(false)
   }
 
   return (
@@ -150,7 +158,7 @@ export function VehiclePanel() {
                     </div>
                     <button
                       className="alert-resolve-btn"
-                      onClick={() => setConfirmingId(alert.id)}
+                      onClick={() => openConfirmModal(alert.id)}
                       title="Marcar como solucionada"
                     >
                       <CheckCircle size={16} />
@@ -202,18 +210,31 @@ export function VehiclePanel() {
 
       {/* Modal de confirmación de resolución */}
       {confirmingId && (
-        <div className="resolve-modal-overlay" onClick={() => setConfirmingId(null)}>
+        <div className="resolve-modal-overlay" onClick={() => { setConfirmingId(null); setEndTrip(false) }}>
           <div className="resolve-modal" onClick={(e) => e.stopPropagation()}>
             <CheckCircle size={28} className="resolve-modal__icon" />
             <p className="resolve-modal__title">¿Confirmar resolución?</p>
             <p className="resolve-modal__body">
-              Marca esta alerta como solucionada. Si el vehículo estaba en estado de alerta por ausencia de movimiento, pasará a inactivo.
+              Marca esta alerta como solucionada. El vehículo pasará a estado inactivo.
             </p>
+            <label className="resolve-modal__stop-trip">
+              <input
+                type="checkbox"
+                checked={endTrip}
+                onChange={(e) => setEndTrip(e.target.checked)}
+              />
+              Finalizar el viaje del conductor
+            </label>
+            {endTrip && (
+              <p className="resolve-modal__stop-hint">
+                El vehículo pasará a <strong>detenido</strong> y la ruta quedará registrada como completada.
+              </p>
+            )}
             <div className="resolve-modal__actions">
               <button className="resolve-modal__confirm" onClick={() => handleResolve(confirmingId)}>
                 Sí, está solucionada
               </button>
-              <button className="resolve-modal__cancel" onClick={() => setConfirmingId(null)}>
+              <button className="resolve-modal__cancel" onClick={() => { setConfirmingId(null); setEndTrip(false) }}>
                 Cancelar
               </button>
             </div>

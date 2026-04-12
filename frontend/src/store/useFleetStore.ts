@@ -12,7 +12,7 @@ interface FleetState {
   setVehicleStatus: (vehicle_id: string, status: Vehicle['status']) => void
   removeVehicle: (vehicle_id: string) => void
   addAlert: (alert: Alert) => void
-  resolveAlert: (alert_id: string, vehicle_id: string, alert_type: string) => void
+  resolveAlert: (alert_id: string, vehicle_id: string, alert_type: string, forceStatus?: Vehicle['status']) => void
   loadAlerts: (alerts: Alert[]) => void
   setManagedVehicleIds: (ids: string[] | null) => void
   selectVehicle: (id: string | null) => void
@@ -94,19 +94,22 @@ export const useFleetStore = create<FleetState>((set) => ({
       }
     }),
 
-  resolveAlert: (alert_id, vehicle_id, _alert_type) =>
+  resolveAlert: (alert_id, vehicle_id, _alert_type, forceStatus) =>
     set((state) => {
       const alerts = state.alerts.map((a) =>
         a.id === alert_id ? { ...a, resolved: true } : a
       )
       const vehicles = { ...state.vehicles }
 
-      // Si no quedan más alertas sin resolver para este vehículo, pasa a idle
       const hasOtherUnresolved = alerts.some(
         (a) => a.vehicle_id === vehicle_id && !a.resolved
       )
       if (!hasOtherUnresolved && vehicles[vehicle_id]?.status === 'alert') {
-        vehicles[vehicle_id] = { ...vehicles[vehicle_id], status: 'idle' }
+        // Si el operador forzó un estado (p.ej. 'stopped'), úsalo; si no, pasa a idle
+        vehicles[vehicle_id] = {
+          ...vehicles[vehicle_id],
+          status: forceStatus ?? 'idle',
+        }
       }
 
       return { alerts, vehicles }
