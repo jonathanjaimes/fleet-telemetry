@@ -119,8 +119,9 @@ const PANIC_OPTIONS = [
 function TelemetryScreen({ driverId, onLogout }: { driverId: string; onLogout: () => void }) {
   const { status, location, trip, alerts, hasPermission, startTrip, stopTrip, triggerPanic } =
     useTelemetry(driverId)
-  const [, forceRender]     = useState(0)
-  const [panicModal, setPanicModal] = useState(false)
+  const [, forceRender]       = useState(0)
+  const [panicModal, setPanicModal]   = useState(false)
+  const [logoutModal, setLogoutModal] = useState(false)
   const cfg = STATUS_CONFIG[status]
 
   const handleLogout = () => {
@@ -128,10 +129,7 @@ function TelemetryScreen({ driverId, onLogout }: { driverId: string; onLogout: (
       Alert.alert('Viaje activo', 'Finaliza el viaje antes de cerrar sesión.')
       return
     }
-    Alert.alert('Cerrar sesión', '¿Deseas salir?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Salir', style: 'destructive', onPress: onLogout },
-    ])
+    setLogoutModal(true)
   }
 
   const handlePanic = () => setPanicModal(true)
@@ -226,6 +224,26 @@ function TelemetryScreen({ driverId, onLogout }: { driverId: string; onLogout: (
           }
         </ScrollView>
       </View>
+
+      {/* Modal de confirmación de cierre de sesión */}
+      <Modal visible={logoutModal} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalBox, styles.logoutModalBox]}>
+            <Text style={styles.logoutModalIcon}>⏏</Text>
+            <Text style={styles.modalTitle}>Cerrar sesión</Text>
+            <Text style={styles.logoutModalSubtitle}>
+              ¿Seguro que deseas cerrar sesión?{'\n'}
+              <Text style={styles.logoutModalId}>{driverId}</Text>
+            </Text>
+            <TouchableOpacity style={styles.logoutConfirmBtn} onPress={onLogout}>
+              <Text style={styles.logoutConfirmText}>Sí, cerrar sesión</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.modalCancel} onPress={() => setLogoutModal(false)}>
+              <Text style={styles.modalCancelText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Modal de tipo de pánico */}
       <Modal visible={panicModal} transparent animationType="slide">
@@ -352,7 +370,13 @@ const styles = StyleSheet.create({
   alertMessage:   { color: '#e2e8f0', fontSize: 13, marginBottom: 4 },
   alertTime:      { color: '#64748b', fontSize: 11 },
 
-  modalOverlay:   { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
+  modalOverlay:   { flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'flex-end' },
+  logoutModalBox:       { alignItems: 'center', paddingVertical: 32 },
+  logoutModalIcon:      { fontSize: 40, marginBottom: 8 },
+  logoutModalSubtitle:  { color: '#94a3b8', fontSize: 14, textAlign: 'center', marginBottom: 24, lineHeight: 22 },
+  logoutModalId:        { color: '#60a5fa', fontWeight: '700' },
+  logoutConfirmBtn:     { width: '100%', backgroundColor: '#ef4444', borderRadius: 12, padding: 16, alignItems: 'center', marginBottom: 4 },
+  logoutConfirmText:    { color: '#fff', fontSize: 16, fontWeight: '700' },
   modalBox:       { backgroundColor: '#1a1d27', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 36 },
   modalTitle:     { color: '#e2e8f0', fontSize: 20, fontWeight: '800', textAlign: 'center', marginBottom: 4 },
   modalSubtitle:  { color: '#64748b', fontSize: 13, textAlign: 'center', marginBottom: 20 },
