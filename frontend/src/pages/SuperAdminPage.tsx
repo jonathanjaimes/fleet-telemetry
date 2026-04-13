@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Truck } from 'lucide-react'
 import { useAuthStore } from '../store/useAuthStore'
 import { ThemeToggle } from '../components/ThemeToggle'
@@ -17,11 +17,15 @@ export function SuperAdminPage() {
   const user    = useAuthStore((s) => s.user)
   const logout  = useAuthStore((s) => s.logout)
   const [fleetUsers, setFleetUsers] = useState<FleetUser[]>([])
-  const [loading, setLoading]       = useState(false)
+  const [loading, setLoading]       = useState(true)
   const [creating, setCreating]     = useState(false)
 
-  const headers = { 'Content-Type': 'application/json', 'x-user-id': user?.unique_id ?? '' }
+  const headers = useMemo(
+    () => ({ 'Content-Type': 'application/json', 'x-user-id': user?.unique_id ?? '' }),
+    [user?.unique_id],
+  )
 
+  // Solo para event handlers (delete, create) — no llamar desde efectos
   const fetchFleet = async () => {
     setLoading(true)
     const res = await fetch(`${BACKEND}/api/users/fleet`, { headers })
@@ -29,7 +33,20 @@ export function SuperAdminPage() {
     setLoading(false)
   }
 
-  useEffect(() => { fetchFleet() }, [])
+  // Carga inicial: setState solo en callbacks .then(), nunca sincrónicamente
+  // en el cuerpo del efecto, conforme al patrón recomendado por React.
+  useEffect(() => {
+    let cancelled = false
+    fetch(`${BACKEND}/api/users/fleet`, { headers })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data: FleetUser[]) => {
+        if (!cancelled) {
+          setFleetUsers(data)
+          setLoading(false)
+        }
+      })
+    return () => { cancelled = true }
+  }, [headers])
 
   const deleteFleetUser = async (uniqueId: string) => {
     if (!window.confirm(`¿Eliminar usuario flota ${uniqueId}?`)) return
