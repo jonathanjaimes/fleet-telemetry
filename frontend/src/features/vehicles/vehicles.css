@@ -118,6 +118,76 @@
   color: var(--color-danger);
 }
 
+/* ── Filtros de alertas por tipo ────────────────────────────────────────── */
+.alert-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0.6rem 1rem 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.alert-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 9999px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.68rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+
+.alert-filter-chip:hover {
+  border-color: var(--color-primary);
+  color: var(--color-text);
+}
+
+.alert-filter-chip--active {
+  border-color: var(--color-primary);
+  background: var(--color-nav-active);
+  color: var(--color-primary);
+}
+
+.alert-filter-chip__label {
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.alert-filter-chip__count {
+  background: var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 0.05rem 0.35rem;
+  border-radius: 9999px;
+  min-width: 16px;
+  text-align: center;
+}
+
+.alert-filter-chip--active .alert-filter-chip__count {
+  background: var(--color-primary);
+  color: var(--color-primary-fg);
+}
+
+.alert-filter-active-label {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  margin-left: auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90px;
+}
+
 .banner-link {
   background: none;
   border: none;

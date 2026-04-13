@@ -20,9 +20,10 @@ function formatDateTime(iso: string): string {
 }
 
 export function VehiclePanel() {
-  const [activeTab, setActiveTab]     = useState<Tab>('fleet')
+  const [activeTab, setActiveTab]       = useState<Tab>('fleet')
   const [confirmingId, setConfirmingId] = useState<string | null>(null)
   const [endTrip, setEndTrip]           = useState(false)
+  const [filterType, setFilterType]     = useState<AlertType | null>(null)
 
   const vehicles      = useFleetStore((s) => s.vehicles)
   const alerts        = useFleetStore((s) => s.alerts)
@@ -35,8 +36,14 @@ export function VehiclePanel() {
   const vehicleList = Object.values(vehicles)
   const alertCount  = vehicleList.filter((v) => v.status === 'alert').length
 
-  const pending  = alerts.filter((a) => !a.resolved)
-  const resolved = alerts.filter((a) => a.resolved)
+  // Tipos únicos presentes en las alertas (para los chips)
+  const alertTypes = [...new Set(alerts.map((a) => a.type).filter(Boolean))] as AlertType[]
+
+  const pending  = alerts.filter((a) => !a.resolved && (!filterType || a.type === filterType))
+  const resolved = alerts.filter((a) => a.resolved  && (!filterType || a.type === filterType))
+
+  // Conteo total por tipo (para el badge del chip)
+  const countByType = (type: AlertType) => alerts.filter((a) => a.type === type).length
 
   const handleDelete = async (id: string) => {
     await fetch(`${BACKEND}/api/vehicles/${id}`, { method: 'DELETE' })
@@ -129,6 +136,31 @@ export function VehiclePanel() {
       {activeTab === 'alerts' && (
         <div className="alerts-panel">
 
+          {/* Filtros por tipo */}
+          {alertTypes.length > 0 && (
+            <div className="alert-filters">
+              <button
+                className={`alert-filter-chip ${filterType === null ? 'alert-filter-chip--active' : ''}`}
+                onClick={() => setFilterType(null)}
+              >
+                Todas
+                <span className="alert-filter-chip__count">{alerts.length}</span>
+              </button>
+              {alertTypes.map((type) => (
+                <button
+                  key={type}
+                  className={`alert-filter-chip ${filterType === type ? 'alert-filter-chip--active' : ''}`}
+                  onClick={() => setFilterType(filterType === type ? null : type)}
+                  title={ALERT_CONFIG[type].label}
+                >
+                  {ALERT_CONFIG[type].icon}
+                  <span className="alert-filter-chip__label">{ALERT_CONFIG[type].label}</span>
+                  <span className="alert-filter-chip__count">{countByType(type)}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* Pendientes — crece y tiene scroll propio */}
           <div className="alerts-panel__pending">
             <div className="alerts-section-header" style={{ paddingLeft: 0, paddingRight: 0 }}>
@@ -136,6 +168,9 @@ export function VehiclePanel() {
               <span>Por solucionar</span>
               {pending.length > 0 && (
                 <span className="alerts-section-count alerts-section-count--danger">{pending.length}</span>
+              )}
+              {filterType && (
+                <span className="alert-filter-active-label">{ALERT_CONFIG[filterType].label}</span>
               )}
             </div>
             {pending.length === 0 ? (
