@@ -36,8 +36,8 @@ export function VehiclePanel() {
   const vehicleList = Object.values(vehicles)
   const alertCount  = vehicleList.filter((v) => v.status === 'alert').length
 
-  // Tipos únicos presentes en las alertas (para los chips)
-  const alertTypes = [...new Set(alerts.map((a) => a.type).filter(Boolean))] as AlertType[]
+  // Todos los tipos siempre visibles
+  const alertTypes = Object.keys(ALERT_CONFIG) as AlertType[]
 
   const pending  = alerts.filter((a) => !a.resolved && (!filterType || a.type === filterType))
   const resolved = alerts.filter((a) => a.resolved  && (!filterType || a.type === filterType))
@@ -137,8 +137,7 @@ export function VehiclePanel() {
         <div className="alerts-panel">
 
           {/* Filtros por tipo */}
-          {alertTypes.length > 0 && (
-            <div className="alert-filters">
+          <div className="alert-filters">
               <button
                 className={`alert-filter-chip ${filterType === null ? 'alert-filter-chip--active' : ''}`}
                 onClick={() => setFilterType(null)}
@@ -159,7 +158,6 @@ export function VehiclePanel() {
                 </button>
               ))}
             </div>
-          )}
 
           {/* Pendientes — crece y tiene scroll propio */}
           <div className="alerts-panel__pending">
