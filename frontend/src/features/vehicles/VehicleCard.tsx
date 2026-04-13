@@ -25,19 +25,21 @@ function formatTime(iso: string): string {
 
 export function VehicleCard({ vehicle, isSelected, onClick, onDelete }: Props) {
   const [confirming, setConfirming] = useState(false)
-  const [, forceRender] = useState(0)
+  // Inicializar con Date.now como función para que React lo llame una sola vez,
+  // evitando llamadas impuras durante el render.
+  const [now, setNow] = useState(Date.now)
   const config = STATUS_CONFIG[vehicle.status]
 
   const showAlertChip =
     vehicle.lastAlertType &&
     vehicle.alertChipExpiry &&
-    Date.now() < vehicle.alertChipExpiry
+    now < vehicle.alertChipExpiry
 
   useEffect(() => {
     if (!vehicle.alertChipExpiry) return
     const remaining = vehicle.alertChipExpiry - Date.now()
     if (remaining <= 0) return
-    const timer = setTimeout(() => forceRender((n) => n + 1), remaining)
+    const timer = setTimeout(() => setNow(Date.now()), remaining)
     return () => clearTimeout(timer)
   }, [vehicle.alertChipExpiry])
 
