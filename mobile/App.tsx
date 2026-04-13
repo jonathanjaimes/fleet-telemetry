@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   StyleSheet, StatusBar, Alert, ActivityIndicator,
@@ -9,13 +9,114 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons'
 import { useTelemetry } from './src/hooks/useTelemetry'
 import { loginDriver } from './src/services/api'
 import { saveSession, loadSession, clearSession } from './src/services/authStorage'
+import { ThemeContext, useThemeCtx } from './src/context/ThemeContext'
+import { useAppTheme } from './src/hooks/useAppTheme'
+import type { AppTheme } from './src/theme/theme'
 import type { LocalAlert } from './src/types'
 
-const STATUS_CONFIG = {
-  connected:    { label: 'Conectado',    color: '#22c55e' },
-  disconnected: { label: 'Desconectado', color: '#ef4444' },
-  sending:      { label: 'Enviando...',  color: '#f59e0b' },
+// ─── Estilos dinámicos ────────────────────────────────────────────────────────
+
+function makeStyles(t: AppTheme) {
+  return StyleSheet.create({
+    container:    { flex: 1, backgroundColor: t.bg },
+    loadingText:  { color: t.textMuted, textAlign: 'center', marginTop: 40, fontSize: 16 },
+    errorText:    { color: t.danger, textAlign: 'center', marginTop: 40, fontSize: 16, padding: 20 },
+
+    // Login
+    loginBox:         { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
+    loginLogo:        { marginBottom: 8 },
+    loginTitle:       { color: t.text, fontSize: 24, fontWeight: '700', marginBottom: 4 },
+    loginSubtitle:    { color: t.textMuted, fontSize: 14, marginBottom: 32 },
+    loginInput:       {
+      width: '100%', backgroundColor: t.surface, borderWidth: 1, borderColor: t.border,
+      borderRadius: 10, padding: 16, color: t.text, fontSize: 18, fontWeight: '700',
+      textAlign: 'center', letterSpacing: 2, marginBottom: 12,
+    },
+    loginError:       { color: t.danger, fontSize: 13, marginBottom: 8, textAlign: 'center' },
+    loginBtn:         { width: '100%', backgroundColor: t.primary, borderRadius: 10, padding: 16, alignItems: 'center' },
+    loginBtnDisabled: { opacity: 0.45 },
+    loginBtnText:     { color: t.primaryFg, fontSize: 16, fontWeight: '700' },
+    loginThemeBtn:    { position: 'absolute', top: 16, right: 16 },
+
+    // Header
+    header:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: t.border, backgroundColor: t.surface },
+    headerLeft:   { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    headerTitle:  { color: t.text, fontSize: 16, fontWeight: '700' },
+    headerRight:  { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    statusBadge:  { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    statusLabel:  { fontSize: 12, fontWeight: '600' },
+    themeBtn:     { padding: 4 },
+
+    // Card
+    card:       { margin: 16, backgroundColor: t.surface, borderRadius: 12, padding: 16, borderWidth: 1, borderColor: t.border },
+    cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+    cardTitle:  { color: t.textMuted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
+    infoRow:    { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+    infoLabel:  { color: t.textMuted, fontSize: 14 },
+    infoValue:  { color: t.text, fontSize: 14, fontWeight: '600' },
+
+    // Logout button (inside card)
+    logoutBtn:     { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: t.surface2, borderWidth: 1, borderColor: t.border, borderRadius: 8, paddingVertical: 4, paddingHorizontal: 10 },
+    logoutBtnText: { color: t.textMuted, fontSize: 12, fontWeight: '600' },
+
+    // Controls
+    controls:        { paddingHorizontal: 16, gap: 12 },
+    tripBtn:         { borderRadius: 12, padding: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10 },
+    tripBtnStart:    { backgroundColor: t.success },
+    tripBtnStop:     { backgroundColor: t.surface2, borderWidth: 1, borderColor: t.primary },
+    tripBtnText:     { color: t.primaryFg === '#FFFFFF' ? '#fff' : '#fff', fontSize: 16, fontWeight: '700' },
+    panicBtn:        { backgroundColor: t.danger, borderRadius: 12, padding: 20, alignItems: 'center', borderWidth: 2, borderColor: `${t.danger}88`, flexDirection: 'row', justifyContent: 'center', gap: 10 },
+    panicBtnDisabled:    { backgroundColor: t.surface2, borderColor: t.border },
+    panicBtnText:        { color: '#fff', fontSize: 18, fontWeight: '900', letterSpacing: 1 },
+    panicBtnTextDisabled:{ color: t.textMuted },
+
+    // Alerts section
+    alertsSection: { flex: 1, margin: 16, marginTop: 12 },
+    alertsTitle:   { color: t.textMuted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 },
+    alertsList:    { flex: 1 },
+    noAlerts:      { color: t.textMuted, fontSize: 14, textAlign: 'center', marginTop: 16 },
+    alertItem:     { flexDirection: 'row', alignItems: 'flex-start', backgroundColor: t.surface, borderRadius: 8, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: t.border, gap: 10 },
+    alertBody:     { flex: 1 },
+    alertMessage:  { color: t.text, fontSize: 13, marginBottom: 4 },
+    alertTime:     { color: t.textMuted, fontSize: 11 },
+
+    // Modals
+    modalOverlay:       { flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'flex-end' },
+    modalBox:           { backgroundColor: t.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 36 },
+    logoutModalBox:     { alignItems: 'center', paddingVertical: 28, gap: 20 },
+    logoutModalId:      { color: t.primary, fontWeight: '700' },
+    logoutConfirmBtn:   { width: '100%', backgroundColor: t.danger, borderRadius: 12, padding: 16, alignItems: 'center' },
+    logoutConfirmText:  { color: '#fff', fontSize: 16, fontWeight: '700' },
+    modalTitle:         { color: t.text, fontSize: 20, fontWeight: '800', textAlign: 'center', marginBottom: 4 },
+    modalSubtitle:      { color: t.textMuted, fontSize: 13, textAlign: 'center', marginBottom: 20 },
+    panicOption:        { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: t.bg, borderWidth: 1, borderColor: t.border, borderRadius: 12, padding: 16, marginBottom: 10 },
+    panicOptionText:    { color: t.text, fontSize: 16, fontWeight: '600' },
+    modalCancel:        { marginTop: 6, padding: 14, alignItems: 'center' },
+    modalCancelText:    { color: t.textMuted, fontSize: 15 },
+  })
 }
+
+// ─── Constantes estáticas (solo nombres/labels, no colores) ──────────────────
+
+const ALERT_ICON_NAMES: Record<LocalAlert['type'], React.ComponentProps<typeof Ionicons>['name']> = {
+  PANIC_BUTTON:    'warning',
+  CONNECTION_LOST: 'wifi-outline',
+  VEHICLE_STOPPED: 'time-outline',
+}
+
+const STATUS_LABELS = {
+  connected:    'Conectado',
+  disconnected: 'Desconectado',
+  sending:      'Enviando...',
+}
+
+const PANIC_OPTIONS: { type: string; label: string; icon: React.ComponentProps<typeof Ionicons>['name'] }[] = [
+  { type: 'PANIC_ACCIDENT',   label: 'Accidente',         icon: 'car-outline'         },
+  { type: 'PANIC_ROBBERY',    label: 'Robo / Asalto',     icon: 'shield-outline'      },
+  { type: 'PANIC_MEDICAL',    label: 'Emergencia médica', icon: 'medkit-outline'      },
+  { type: 'PANIC_MECHANICAL', label: 'Falla mecánica',    icon: 'construct-outline'   },
+  { type: 'PANIC_OTHER',      label: 'Otra emergencia',   icon: 'help-circle-outline' },
+]
 
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
@@ -29,17 +130,21 @@ function formatDuration(startedAt: string): string {
   return `${h}:${m}:${s}`
 }
 
-const ALERT_ICONS: Record<LocalAlert['type'], { name: React.ComponentProps<typeof Ionicons>['name']; color: string }> = {
-  PANIC_BUTTON:    { name: 'warning',         color: '#ef4444' },
-  CONNECTION_LOST: { name: 'wifi-outline',    color: '#f59e0b' },
-  VEHICLE_STOPPED: { name: 'time-outline',    color: '#3b82f6' },
-}
+// ─── AlertItem ────────────────────────────────────────────────────────────────
 
 function AlertItem({ alert }: { alert: LocalAlert }) {
-  const icon = ALERT_ICONS[alert.type]
+  const { theme } = useThemeCtx()
+  const styles = useMemo(() => makeStyles(theme), [theme.mode])
+  const iconName = ALERT_ICON_NAMES[alert.type]
+  const iconColor = alert.type === 'PANIC_BUTTON'
+    ? theme.danger
+    : alert.type === 'CONNECTION_LOST'
+      ? theme.warning
+      : theme.idle
+
   return (
     <View style={styles.alertItem}>
-      <Ionicons name={icon.name} size={18} color={icon.color} />
+      <Ionicons name={iconName} size={18} color={iconColor} />
       <View style={styles.alertBody}>
         <Text style={styles.alertMessage}>{alert.message}</Text>
         <Text style={styles.alertTime}>{formatTime(alert.timestamp)}</Text>
@@ -48,8 +153,12 @@ function AlertItem({ alert }: { alert: LocalAlert }) {
   )
 }
 
-// ─── Pantalla de login ────────────────────────────────────────────────────────
+// ─── LoginScreen ──────────────────────────────────────────────────────────────
+
 function LoginScreen({ onLogin }: { onLogin: (id: string) => void }) {
+  const { theme, toggleTheme } = useThemeCtx()
+  const styles = useMemo(() => makeStyles(theme), [theme.mode])
+
   const [uniqueId, setUniqueId] = useState('')
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState('')
@@ -73,7 +182,7 @@ function LoginScreen({ onLogin }: { onLogin: (id: string) => void }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#0f1117" />
+      <StatusBar barStyle={theme.statusBar} backgroundColor={theme.bg} />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -81,8 +190,17 @@ function LoginScreen({ onLogin }: { onLogin: (id: string) => void }) {
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.loginBox}>
+            {/* Toggle de tema en esquina superior derecha */}
+            <TouchableOpacity style={styles.loginThemeBtn} onPress={toggleTheme}>
+              <Ionicons
+                name={theme.mode === 'dark' ? 'sunny-outline' : 'moon-outline'}
+                size={22}
+                color={theme.textMuted}
+              />
+            </TouchableOpacity>
+
             <View style={styles.loginLogo}>
-              <MaterialIcons name="local-shipping" size={56} color="#3b82f6" />
+              <MaterialIcons name="local-shipping" size={56} color={theme.primary} />
             </View>
             <Text style={styles.loginTitle}>Fleet Telemetría</Text>
             <Text style={styles.loginSubtitle}>Ingresa tu ID de conductor</Text>
@@ -92,7 +210,7 @@ function LoginScreen({ onLogin }: { onLogin: (id: string) => void }) {
               value={uniqueId}
               onChangeText={(t) => setUniqueId(t.toUpperCase())}
               placeholder="Ej: DRV-AB3C9"
-              placeholderTextColor="#64748b"
+              placeholderTextColor={theme.textMuted}
               autoCapitalize="characters"
               autoCorrect={false}
               returnKeyType="done"
@@ -105,7 +223,7 @@ function LoginScreen({ onLogin }: { onLogin: (id: string) => void }) {
               disabled={!uniqueId.trim() || loading}
             >
               {loading
-                ? <ActivityIndicator color="#fff" />
+                ? <ActivityIndicator color={theme.primaryFg} />
                 : <Text style={styles.loginBtnText}>Ingresar</Text>
               }
             </TouchableOpacity>
@@ -116,22 +234,24 @@ function LoginScreen({ onLogin }: { onLogin: (id: string) => void }) {
   )
 }
 
-const PANIC_OPTIONS: { type: string; label: string; icon: React.ComponentProps<typeof Ionicons>['name'] }[] = [
-  { type: 'PANIC_ACCIDENT',   label: 'Accidente',          icon: 'car-outline'          },
-  { type: 'PANIC_ROBBERY',    label: 'Robo / Asalto',      icon: 'shield-outline'       },
-  { type: 'PANIC_MEDICAL',    label: 'Emergencia médica',  icon: 'medkit-outline'       },
-  { type: 'PANIC_MECHANICAL', label: 'Falla mecánica',     icon: 'construct-outline'    },
-  { type: 'PANIC_OTHER',      label: 'Otra emergencia',    icon: 'help-circle-outline'  },
-]
+// ─── TelemetryScreen ──────────────────────────────────────────────────────────
 
-// ─── Pantalla principal ───────────────────────────────────────────────────────
 function TelemetryScreen({ driverId, onLogout }: { driverId: string; onLogout: () => void }) {
+  const { theme, toggleTheme } = useThemeCtx()
+  const styles = useMemo(() => makeStyles(theme), [theme.mode])
+
   const { status, location, trip, alerts, hasPermission, starting, startTrip, stopTrip, triggerPanic } =
     useTelemetry(driverId)
   const [, forceRender]       = useState(0)
   const [panicModal, setPanicModal]   = useState(false)
   const [logoutModal, setLogoutModal] = useState(false)
-  const cfg = STATUS_CONFIG[status]
+
+  const statusColors = {
+    connected:    theme.success,
+    disconnected: theme.danger,
+    sending:      theme.warning,
+  }
+  const statusColor = statusColors[status]
 
   const handleLogout = () => {
     if (trip.isActive) {
@@ -140,8 +260,6 @@ function TelemetryScreen({ driverId, onLogout }: { driverId: string; onLogout: (
     }
     setLogoutModal(true)
   }
-
-  const handlePanic = () => setPanicModal(true)
 
   const handleSelectPanic = (panicType: string) => {
     setPanicModal(false)
@@ -159,7 +277,7 @@ function TelemetryScreen({ driverId, onLogout }: { driverId: string; onLogout: (
     return (
       <SafeAreaView style={styles.container}>
         <View style={{ alignItems: 'center', gap: 8, padding: 20 }}>
-          <Ionicons name="location-outline" size={40} color="#ef4444" />
+          <Ionicons name="location-outline" size={40} color={theme.danger} />
           <Text style={styles.errorText}>Se requiere permiso de ubicación para esta app.</Text>
         </View>
       </SafeAreaView>
@@ -168,34 +286,45 @@ function TelemetryScreen({ driverId, onLogout }: { driverId: string; onLogout: (
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#0f1117" />
+      <StatusBar barStyle={theme.statusBar} backgroundColor={theme.surface} />
 
+      {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <MaterialIcons name="local-shipping" size={22} color="#e2e8f0" />
+          <MaterialIcons name="local-shipping" size={22} color={theme.text} />
           <Text style={styles.headerTitle}>Fleet Telemetría</Text>
         </View>
-        <View style={styles.statusBadge}>
-          <Ionicons
-            name={status === 'sending' ? 'radio-button-on' : status === 'connected' ? 'ellipse' : 'ellipse-outline'}
-            size={10}
-            color={cfg.color}
-          />
-          <Text style={[styles.statusLabel, { color: cfg.color }]}>{cfg.label}</Text>
+        <View style={styles.headerRight}>
+          <View style={styles.statusBadge}>
+            <Ionicons
+              name={status === 'sending' ? 'radio-button-on' : status === 'connected' ? 'ellipse' : 'ellipse-outline'}
+              size={10}
+              color={statusColor}
+            />
+            <Text style={[styles.statusLabel, { color: statusColor }]}>{STATUS_LABELS[status]}</Text>
+          </View>
+          <TouchableOpacity style={styles.themeBtn} onPress={toggleTheme}>
+            <Ionicons
+              name={theme.mode === 'dark' ? 'sunny-outline' : 'moon-outline'}
+              size={18}
+              color={theme.textMuted}
+            />
+          </TouchableOpacity>
         </View>
       </View>
 
+      {/* Card de viaje */}
       <View style={styles.card}>
         <View style={styles.cardHeader}>
           <Text style={styles.cardTitle}>Viaje actual</Text>
           <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-            <Ionicons name="log-out-outline" size={14} color="#94a3b8" />
+            <Ionicons name="log-out-outline" size={14} color={theme.textMuted} />
             <Text style={styles.logoutBtnText}>Cerrar sesión</Text>
           </TouchableOpacity>
         </View>
         <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>Estado</Text>
-          <Text style={[styles.infoValue, { color: trip.isActive ? '#22c55e' : '#64748b' }]}>
+          <Text style={[styles.infoValue, { color: trip.isActive ? theme.success : theme.textMuted }]}>
             {trip.isActive ? 'EN CURSO' : 'DETENIDO'}
           </Text>
         </View>
@@ -221,6 +350,7 @@ function TelemetryScreen({ driverId, onLogout }: { driverId: string; onLogout: (
         )}
       </View>
 
+      {/* Controles */}
       <View style={styles.controls}>
         <TouchableOpacity
           style={[styles.tripBtn, trip.isActive ? styles.tripBtnStop : styles.tripBtnStart]}
@@ -242,14 +372,15 @@ function TelemetryScreen({ driverId, onLogout }: { driverId: string; onLogout: (
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.panicBtn, !trip.isActive && styles.panicBtnDisabled]}
-          onPress={handlePanic}
+          onPress={() => setPanicModal(true)}
           disabled={!trip.isActive}
         >
-          <Ionicons name="warning-outline" size={22} color={trip.isActive ? '#fff' : '#94a3b8'} />
+          <Ionicons name="warning-outline" size={22} color={trip.isActive ? '#fff' : theme.textMuted} />
           <Text style={[styles.panicBtnText, !trip.isActive && styles.panicBtnTextDisabled]}>PÁNICO</Text>
         </TouchableOpacity>
       </View>
 
+      {/* Alertas locales */}
       <View style={styles.alertsSection}>
         <Text style={styles.alertsTitle}>Alertas locales ({alerts.length})</Text>
         <ScrollView style={styles.alertsList} showsVerticalScrollIndicator={false}>
@@ -260,7 +391,7 @@ function TelemetryScreen({ driverId, onLogout }: { driverId: string; onLogout: (
         </ScrollView>
       </View>
 
-      {/* Modal de confirmación de cierre de sesión */}
+      {/* Modal de cierre de sesión */}
       <Modal visible={logoutModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={[styles.modalBox, styles.logoutModalBox]}>
@@ -282,7 +413,7 @@ function TelemetryScreen({ driverId, onLogout }: { driverId: string; onLogout: (
       <Modal visible={panicModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
-            <Ionicons name="warning" size={32} color="#ef4444" style={{ alignSelf: 'center', marginBottom: 8 }} />
+            <Ionicons name="warning" size={32} color={theme.danger} style={{ alignSelf: 'center', marginBottom: 8 }} />
             <Text style={styles.modalTitle}>¿Qué está pasando?</Text>
             <Text style={styles.modalSubtitle}>Selecciona el tipo de emergencia</Text>
             {PANIC_OPTIONS.map((opt) => (
@@ -291,7 +422,7 @@ function TelemetryScreen({ driverId, onLogout }: { driverId: string; onLogout: (
                 style={styles.panicOption}
                 onPress={() => handleSelectPanic(opt.type)}
               >
-                <Ionicons name={opt.icon} size={18} color="#e2e8f0" />
+                <Ionicons name={opt.icon} size={18} color={theme.text} />
                 <Text style={styles.panicOptionText}>{opt.label}</Text>
               </TouchableOpacity>
             ))}
@@ -306,7 +437,11 @@ function TelemetryScreen({ driverId, onLogout }: { driverId: string; onLogout: (
 }
 
 // ─── Root ─────────────────────────────────────────────────────────────────────
+
 export default function App() {
+  const appTheme = useAppTheme()
+  const { theme } = appTheme
+
   const [driverId, setDriverId] = useState<string | null>(null)
   const [checking, setChecking] = useState(true)
 
@@ -333,89 +468,24 @@ export default function App() {
 
   if (checking) {
     return (
-      <SafeAreaProvider>
-        <SafeAreaView style={styles.container}>
-          <ActivityIndicator color="#3b82f6" style={{ marginTop: 80 }} />
-        </SafeAreaView>
-      </SafeAreaProvider>
-    )
-  }
-
-  if (!driverId) {
-    return (
-      <SafeAreaProvider>
-        <LoginScreen onLogin={setDriverId} />
-      </SafeAreaProvider>
+      <ThemeContext.Provider value={appTheme}>
+        <SafeAreaProvider>
+          <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }}>
+            <ActivityIndicator color={theme.primary} style={{ marginTop: 80 }} />
+          </SafeAreaView>
+        </SafeAreaProvider>
+      </ThemeContext.Provider>
     )
   }
 
   return (
-    <SafeAreaProvider>
-      <TelemetryScreen driverId={driverId} onLogout={handleLogout} />
-    </SafeAreaProvider>
+    <ThemeContext.Provider value={appTheme}>
+      <SafeAreaProvider>
+        {driverId
+          ? <TelemetryScreen driverId={driverId} onLogout={handleLogout} />
+          : <LoginScreen onLogin={setDriverId} />
+        }
+      </SafeAreaProvider>
+    </ThemeContext.Provider>
   )
 }
-
-const styles = StyleSheet.create({
-  container:      { flex: 1, backgroundColor: '#0f1117' },
-  loadingText:    { color: '#64748b', textAlign: 'center', marginTop: 40, fontSize: 16 },
-  errorText:      { color: '#ef4444', textAlign: 'center', marginTop: 40, fontSize: 16, padding: 20 },
-
-  loginBox:       { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
-  loginLogo:      { marginBottom: 8 },
-  loginTitle:     { color: '#e2e8f0', fontSize: 24, fontWeight: '700', marginBottom: 4 },
-  loginSubtitle:  { color: '#64748b', fontSize: 14, marginBottom: 32 },
-  loginInput:     { width: '100%', backgroundColor: '#1a1d27', borderWidth: 1, borderColor: '#2a2d3e', borderRadius: 10, padding: 16, color: '#e2e8f0', fontSize: 18, fontWeight: '700', textAlign: 'center', letterSpacing: 2, marginBottom: 12 },
-  loginError:     { color: '#ef4444', fontSize: 13, marginBottom: 8, textAlign: 'center' },
-  loginBtn:       { width: '100%', backgroundColor: '#3b82f6', borderRadius: 10, padding: 16, alignItems: 'center' },
-  loginBtnDisabled: { opacity: 0.45 },
-  loginBtnText:   { color: '#fff', fontSize: 16, fontWeight: '700' },
-
-  header:         { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#2a2d3e' },
-  headerLeft:     { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  headerTitle:    { color: '#e2e8f0', fontSize: 16, fontWeight: '700' },
-  statusBadge:    { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  statusLabel:    { fontSize: 12, fontWeight: '600' },
-
-  cardHeader:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  logoutBtn:      { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#1e293b', borderWidth: 1, borderColor: '#334155', borderRadius: 8, paddingVertical: 4, paddingHorizontal: 10 },
-  logoutBtnText:  { color: '#94a3b8', fontSize: 12, fontWeight: '600' },
-
-  card:           { margin: 16, backgroundColor: '#1a1d27', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#2a2d3e' },
-  cardTitle:      { color: '#64748b', fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
-  infoRow:        { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  infoLabel:      { color: '#64748b', fontSize: 14 },
-  infoValue:      { color: '#e2e8f0', fontSize: 14, fontWeight: '600' },
-
-  controls:       { paddingHorizontal: 16, gap: 12 },
-  tripBtn:        { borderRadius: 12, padding: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10 },
-  tripBtnStart:   { backgroundColor: '#22c55e' },
-  tripBtnStop:    { backgroundColor: '#2a2d3e', borderWidth: 1, borderColor: '#3b82f6' },
-  tripBtnText:    { color: '#fff', fontSize: 16, fontWeight: '700' },
-  panicBtn:         { backgroundColor: '#ef4444', borderRadius: 12, padding: 20, alignItems: 'center', borderWidth: 2, borderColor: '#fca5a5', flexDirection: 'row', justifyContent: 'center', gap: 10 },
-  panicBtnDisabled: { backgroundColor: '#1e293b', borderColor: '#334155' },
-  panicBtnText:     { color: '#fff', fontSize: 18, fontWeight: '900', letterSpacing: 1 },
-  panicBtnTextDisabled: { color: '#94a3b8' },
-
-  alertsSection:  { flex: 1, margin: 16, marginTop: 12 },
-  alertsTitle:    { color: '#64748b', fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 },
-  alertsList:     { flex: 1 },
-  noAlerts:       { color: '#64748b', fontSize: 14, textAlign: 'center', marginTop: 16 },
-  alertItem:      { flexDirection: 'row', alignItems: 'flex-start', backgroundColor: '#1a1d27', borderRadius: 8, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: '#2a2d3e', gap: 10 },
-  alertBody:      { flex: 1 },
-  alertMessage:   { color: '#e2e8f0', fontSize: 13, marginBottom: 4 },
-  alertTime:      { color: '#64748b', fontSize: 11 },
-
-  modalOverlay:   { flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'flex-end' },
-  logoutModalBox:       { alignItems: 'center', paddingVertical: 28, gap: 20 },
-  logoutModalId:        { color: '#60a5fa', fontWeight: '700' },
-  logoutConfirmBtn:     { width: '100%', backgroundColor: '#ef4444', borderRadius: 12, padding: 16, alignItems: 'center' },
-  logoutConfirmText:    { color: '#fff', fontSize: 16, fontWeight: '700' },
-  modalBox:       { backgroundColor: '#1a1d27', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 36 },
-  modalTitle:     { color: '#e2e8f0', fontSize: 20, fontWeight: '800', textAlign: 'center', marginBottom: 4 },
-  modalSubtitle:  { color: '#64748b', fontSize: 13, textAlign: 'center', marginBottom: 20 },
-  panicOption:    { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#0f1117', borderWidth: 1, borderColor: '#2a2d3e', borderRadius: 12, padding: 16, marginBottom: 10 },
-  panicOptionText:{ color: '#e2e8f0', fontSize: 16, fontWeight: '600' },
-  modalCancel:    { marginTop: 6, padding: 14, alignItems: 'center' },
-  modalCancelText:{ color: '#64748b', fontSize: 15 },
-})
