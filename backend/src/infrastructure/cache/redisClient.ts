@@ -2,10 +2,24 @@ import { createClient } from 'redis'
 
 const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379'
 
-export const redisClient = createClient({
-  url: REDIS_URL,
-  socket: REDIS_URL.startsWith('rediss://') ? { tls: true, rejectUnauthorized: false } : undefined,
-})
+function buildRedisConfig(rawUrl: string) {
+  if (!rawUrl.startsWith('rediss://')) {
+    return { url: rawUrl }
+  }
+  const parsed = new URL(rawUrl)
+  return {
+    socket: {
+      host: parsed.hostname,
+      port: Number(parsed.port) || 6379,
+      tls: true,
+      rejectUnauthorized: false,
+    },
+    username: parsed.username || 'default',
+    password: decodeURIComponent(parsed.password),
+  }
+}
+
+export const redisClient = createClient(buildRedisConfig(REDIS_URL))
 
 redisClient.on('error', (err) => console.error('[Redis] Error:', err))
 
