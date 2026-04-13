@@ -3,9 +3,10 @@ import { io, Socket } from 'socket.io-client'
 import { useFleetStore } from '../store/useFleetStore'
 import { useAuthStore } from '../store/useAuthStore'
 import type { GpsReading, Alert } from '../types'
+import { BACKEND_URL } from '../config'
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL ?? 'http://localhost:3001'
-const BACKEND    = import.meta.env.VITE_BACKEND_URL ?? 'http://localhost:3001'
+const SOCKET_URL = BACKEND_URL
+const BACKEND    = BACKEND_URL
 
 let socket: Socket | null = null
 
