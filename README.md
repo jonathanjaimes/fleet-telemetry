@@ -292,6 +292,7 @@ En el prototipo actual la lectura es continua para facilitar la evaluación. En 
 | Escritura de tests unitarios | Una vez definidos los contratos de dominio, la IA ayudó a redactar los casos de prueba bajo revisión y corrección manual |
 | Configuración de docker-compose y Dockerfiles | Variables de entorno, healthchecks, orden de dependencias entre servicios |
 | Corrección de errores de TypeScript | Errores de tipado en rutas Express y castings de módulos externos |
+| Redacción de mensajes de commit | La IA generó el copy descriptivo de los commits a partir del contexto de cada cambio, manteniendo consistencia en el historial del repositorio |
 
 ### Alucinación encontrada y cómo se corrigió
 
@@ -339,9 +340,9 @@ En la generación de boilerplate del `docker-compose.yml`, la IA configuró el s
 
 ## Video de sustentación
 
-> Enlace: *(se agrega al finalizar la grabación)*
+**[Ver en YouTube](https://youtu.be/XHEs8c9Ym-M)**
 
-Duración: 5–10 minutos. Cubre la arquitectura elegida, demostración en vivo del sistema (dashboard + simulador + app móvil) y justificación de las decisiones técnicas principales.
+Duración: 5–10 minutos. Cubre la arquitectura elegida, demostración en vivo del sistema (dashboard + app móvil) y justificación de las decisiones técnicas principales.
 
 ---
 
