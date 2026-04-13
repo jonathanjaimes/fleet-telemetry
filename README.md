@@ -222,7 +222,7 @@ Cada lectura GPS genera una clave determinista `dedup:{vehicle_id}:{lat}:{lng}:{
 Al eliminar un vehículo:
 1. Se elimina de Redis (caché + flags)
 2. Se elimina de PostgreSQL
-3. Se activa un flag `deleted:{vehicle_id}` con TTL de 5 minutos para que lecturas GPS tardías en vuelo sean rechazadas sin escribir en DB
+3. Se activa un flag `deleted:{vehicle_id}` con TTL de 30 segundos para que lecturas GPS tardías en vuelo sean rechazadas sin escribir en DB
 
 Si el proceso falla entre los pasos 2 y 3, el flag impide que el vehículo "resucite" por mensajes GPS en tránsito.
 
@@ -246,7 +246,7 @@ El sistema usa la fórmula de **Haversine** para calcular la distancia real entr
 |---|---|
 | < 30 s | Sin cambio de estado |
 | 30 s – 120 s | Estado `idle` (vehículo quieto, viaje activo) |
-| > 120 s | Estado `alert` + alerta `VEHICLE_STOPPED` emitida |
+| ≥ 120 s | Estado `alert` + alerta `VEHICLE_STOPPED` emitida |
 
 ---
 
