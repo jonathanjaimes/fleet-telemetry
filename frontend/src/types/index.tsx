@@ -29,13 +29,13 @@ export type AlertType =
   | 'PANIC_MECHANICAL'
   | 'PANIC_OTHER'
 
-export const ALERT_CONFIG: Record<AlertType, { icon: React.ReactNode; label: string }> = {
-  VEHICLE_STOPPED:  { icon: <Clock size={14} />,       label: 'Sin movimiento'    },
-  PANIC_ACCIDENT:   { icon: <Car size={14} />,          label: 'Accidente'         },
-  PANIC_ROBBERY:    { icon: <ShieldAlert size={14} />,  label: 'Robo / Asalto'    },
-  PANIC_MEDICAL:    { icon: <HeartPulse size={14} />,   label: 'Emergencia médica' },
-  PANIC_MECHANICAL: { icon: <Wrench size={14} />,       label: 'Falla mecánica'   },
-  PANIC_OTHER:      { icon: <HelpCircle size={14} />,   label: 'Otra emergencia'  },
+export const ALERT_CONFIG: Record<AlertType, { icon: React.ReactNode; label: string; short: string }> = {
+  VEHICLE_STOPPED:  { icon: <Clock size={12} />,       label: 'Sin movimiento',   short: 'Sin mov.'  },
+  PANIC_ACCIDENT:   { icon: <Car size={12} />,          label: 'Accidente',        short: 'Accidente' },
+  PANIC_ROBBERY:    { icon: <ShieldAlert size={12} />,  label: 'Robo / Asalto',   short: 'Robo'      },
+  PANIC_MEDICAL:    { icon: <HeartPulse size={12} />,   label: 'Emergencia médica',short: 'Médica'    },
+  PANIC_MECHANICAL: { icon: <Wrench size={12} />,       label: 'Falla mecánica',  short: 'Mecánica'  },
+  PANIC_OTHER:      { icon: <HelpCircle size={12} />,   label: 'Otra emergencia', short: 'Otra'      },
 }
 
 export interface Alert {

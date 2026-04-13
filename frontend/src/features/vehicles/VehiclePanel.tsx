@@ -23,7 +23,7 @@ export function VehiclePanel() {
   const [activeTab, setActiveTab]       = useState<Tab>('fleet')
   const [confirmingId, setConfirmingId] = useState<string | null>(null)
   const [endTrip, setEndTrip]           = useState(false)
-  const [filterType, setFilterType]     = useState<AlertType | null>(null)
+  const [filterTypes, setFilterTypes]   = useState<Set<AlertType>>(new Set())
 
   const vehicles      = useFleetStore((s) => s.vehicles)
   const alerts        = useFleetStore((s) => s.alerts)
@@ -39,11 +39,22 @@ export function VehiclePanel() {
   // Todos los tipos siempre visibles
   const alertTypes = Object.keys(ALERT_CONFIG) as AlertType[]
 
-  const pending  = alerts.filter((a) => !a.resolved && (!filterType || a.type === filterType))
-  const resolved = alerts.filter((a) => a.resolved  && (!filterType || a.type === filterType))
+  const matchesFilter = (type: AlertType | undefined) =>
+    filterTypes.size === 0 || (!!type && filterTypes.has(type))
+
+  const pending  = alerts.filter((a) => !a.resolved && matchesFilter(a.type))
+  const resolved = alerts.filter((a) => a.resolved  && matchesFilter(a.type))
 
   // Conteo total por tipo (para el badge del chip)
   const countByType = (type: AlertType) => alerts.filter((a) => a.type === type).length
+
+  const toggleFilter = (type: AlertType) => {
+    setFilterTypes((prev) => {
+      const next = new Set(prev)
+      if (next.has(type)) { next.delete(type) } else { next.add(type) }
+      return next
+    })
+  }
 
   const handleDelete = async (id: string) => {
     await fetch(`${BACKEND}/api/vehicles/${id}`, { method: 'DELETE' })
@@ -138,26 +149,30 @@ export function VehiclePanel() {
 
           {/* Filtros por tipo */}
           <div className="alert-filters">
+            <div className="alert-filters__row">
               <button
-                className={`alert-filter-chip ${filterType === null ? 'alert-filter-chip--active' : ''}`}
-                onClick={() => setFilterType(null)}
+                className={`alert-filter-chip alert-filter-chip--all ${filterTypes.size === 0 ? 'alert-filter-chip--active' : ''}`}
+                onClick={() => setFilterTypes(new Set())}
               >
                 Todas
                 <span className="alert-filter-chip__count">{alerts.length}</span>
               </button>
+            </div>
+            <div className="alert-filters__grid">
               {alertTypes.map((type) => (
                 <button
                   key={type}
-                  className={`alert-filter-chip ${filterType === type ? 'alert-filter-chip--active' : ''}`}
-                  onClick={() => setFilterType(filterType === type ? null : type)}
+                  className={`alert-filter-chip ${filterTypes.has(type) ? 'alert-filter-chip--active' : ''}`}
+                  onClick={() => toggleFilter(type)}
                   title={ALERT_CONFIG[type].label}
                 >
                   {ALERT_CONFIG[type].icon}
-                  <span className="alert-filter-chip__label">{ALERT_CONFIG[type].label}</span>
+                  <span>{ALERT_CONFIG[type].short}</span>
                   <span className="alert-filter-chip__count">{countByType(type)}</span>
                 </button>
               ))}
             </div>
+          </div>
 
           {/* Pendientes — crece y tiene scroll propio */}
           <div className="alerts-panel__pending">
@@ -167,8 +182,10 @@ export function VehiclePanel() {
               {pending.length > 0 && (
                 <span className="alerts-section-count alerts-section-count--danger">{pending.length}</span>
               )}
-              {filterType && (
-                <span className="alert-filter-active-label">{ALERT_CONFIG[filterType].label}</span>
+              {filterTypes.size > 0 && (
+                <span className="alert-filter-active-label">
+                  {[...filterTypes].map((t) => ALERT_CONFIG[t].short).join(', ')}
+                </span>
               )}
             </div>
             {pending.length === 0 ? (
