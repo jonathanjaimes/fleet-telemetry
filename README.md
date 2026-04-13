@@ -64,25 +64,27 @@ La app móvil es opcional en cuanto a instrucciones de levantamiento del jurado,
 
 **Requisitos adicionales:**
 - Expo Go instalado en el dispositivo físico (Android o iOS)
-- ngrok con cuenta gratuita en [ngrok.com](https://ngrok.com) (o Cloudflare Tunnel)
+- Cloudflare Tunnel: `brew install cloudflare/cloudflare/cloudflared` (macOS) o [descargar en cloudflare.com](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/)
 
 ```bash
-# 1. Exponer el backend (en una terminal aparte, con Docker corriendo)
-ngrok http 3001
+# 1. Exponer el backend con Cloudflare Tunnel (en una terminal aparte, con Docker corriendo)
+cloudflared tunnel --url http://localhost:3001
+# Aparecerá una URL tipo https://xxxx.trycloudflare.com
 
-# 2. Copiar la URL https://xxxx.ngrok-free.app
-
-# 3. Configurar la app
+# 2. Configurar la app
 cd mobile
 cp .env.example .env
-# Editar .env y pegar la URL de ngrok en EXPO_PUBLIC_BACKEND_URL
+# Editar .env y pegar la URL de Cloudflare en EXPO_PUBLIC_BACKEND_URL
+# EXPO_PUBLIC_BACKEND_URL=https://xxxx.trycloudflare.com
 
-# 4. Instalar dependencias e iniciar
+# 3. Instalar dependencias e iniciar
 npm install
 npx expo start --tunnel --clear
 ```
 
 Escanear el QR con Expo Go desde el dispositivo.
+
+> **Nota**: se usa Cloudflare Tunnel para exponer el backend porque no requiere cuenta ni tiene límite de sesiones simultáneas. El tunnel de Expo (`--tunnel`) usa ngrok internamente solo para servir el bundle de JavaScript al dispositivo — ambos servicios coexisten sin conflicto.
 
 ---
 
