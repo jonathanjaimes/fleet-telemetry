@@ -19,7 +19,7 @@ function buildRedisConfig(rawUrl: string) {
   }
 }
 
-export const redisClient = createClient(buildRedisConfig(REDIS_URL))
+export const redisClient = createClient(buildRedisConfig(REDIS_URL) as Parameters<typeof createClient>[0])
 
 redisClient.on('error', (err) => console.error('[Redis] Error:', err))
 
