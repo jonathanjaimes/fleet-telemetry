@@ -55,6 +55,35 @@ export function useTelemetry(driverId: string) {
     return () => { socket.off('vehicle:deleted', handleDeleted) }
   }, [])
 
+  // Escuchar cuando el viaje es finalizado desde el dashboard al resolver una alerta
+  useEffect(() => {
+    const socket = getSocket()
+
+    const handleStatus = (data: { vehicle_id: string; status: string }) => {
+      if (data.vehicle_id !== VEHICLE_ID) return
+      if (data.status !== 'stopped') return
+
+      stoppingRef.current = true
+      if (intervalRef.current) clearInterval(intervalRef.current)
+
+      setTrip({ isActive: false, startedAt: null, vehicleId: VEHICLE_ID })
+      setStatus('disconnected')
+
+      const alert: Omit<LocalAlert, 'id'> = {
+        message: 'Viaje finalizado desde el dashboard',
+        timestamp: new Date().toISOString(),
+        type: 'CONNECTION_LOST',
+      }
+      saveAlert({ ...alert, id: Date.now().toString() })
+      setAlerts((prev) => [{ ...alert, id: Date.now().toString() }, ...prev].slice(0, 50))
+
+      setTimeout(() => { stoppingRef.current = false }, 3000)
+    }
+
+    socket.on('vehicle:status', handleStatus)
+    return () => { socket.off('vehicle:status', handleStatus) }
+  }, [])
+
   const addAlert = useCallback(async (alert: Omit<LocalAlert, 'id'>) => {
     const full: LocalAlert = { ...alert, id: Date.now().toString() }
     await saveAlert(full)
