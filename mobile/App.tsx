@@ -1,10 +1,14 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   StyleSheet, StatusBar, Alert, ActivityIndicator,
   KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, Modal,
 } from 'react-native'
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
+import * as SplashScreen from 'expo-splash-screen'
+
+// Mantener el splash visible hasta que la app esté lista
+SplashScreen.preventAutoHideAsync()
 import { Ionicons, MaterialIcons } from '@expo/vector-icons'
 import { useTelemetry } from './src/hooks/useTelemetry'
 import { loginDriver } from './src/services/api'
@@ -443,44 +447,37 @@ export default function App() {
   const { theme } = appTheme
 
   const [driverId, setDriverId] = useState<string | null>(null)
-  const [checking, setChecking] = useState(true)
+  const [appReady, setAppReady] = useState(false)
 
   useEffect(() => {
-    const validate = async () => {
+    const prepare = async () => {
       const s = await loadSession()
       if (s) {
         const result = await loginDriver(s.unique_id)
-        if (result === 'ok') {
-          setDriverId(s.unique_id)
-        } else {
-          await clearSession()
-        }
+        if (result === 'ok') setDriverId(s.unique_id)
+        else await clearSession()
       }
-      setChecking(false)
+      setAppReady(true)
     }
-    validate()
+    prepare()
   }, [])
+
+  // Ocultar el splash en cuanto el layout esté listo
+  const onLayoutRootView = useCallback(async () => {
+    if (appReady) await SplashScreen.hideAsync()
+  }, [appReady])
 
   const handleLogout = async () => {
     await clearSession()
     setDriverId(null)
   }
 
-  if (checking) {
-    return (
-      <ThemeContext.Provider value={appTheme}>
-        <SafeAreaProvider>
-          <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }}>
-            <ActivityIndicator color={theme.primary} style={{ marginTop: 80 }} />
-          </SafeAreaView>
-        </SafeAreaProvider>
-      </ThemeContext.Provider>
-    )
-  }
+  // Mientras no esté lista la app, el splash sigue visible — no renderizar nada
+  if (!appReady) return null
 
   return (
     <ThemeContext.Provider value={appTheme}>
-      <SafeAreaProvider>
+      <SafeAreaProvider onLayout={onLayoutRootView}>
         {driverId
           ? <TelemetryScreen driverId={driverId} onLogout={handleLogout} />
           : <LoginScreen onLogin={setDriverId} />
