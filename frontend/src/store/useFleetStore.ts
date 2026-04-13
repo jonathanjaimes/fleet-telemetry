@@ -71,7 +71,8 @@ export const useFleetStore = create<FleetState>((set) => ({
 
   removeVehicle: (vehicle_id) =>
     set((state) => {
-      const { [vehicle_id]: _, ...rest } = state.vehicles
+      const { [vehicle_id]: _removed, ...rest } = state.vehicles
+      void _removed
       return {
         vehicles: rest,
         selectedVehicleId: state.selectedVehicleId === vehicle_id ? null : state.selectedVehicleId,
