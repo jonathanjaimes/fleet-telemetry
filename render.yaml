@@ -48,11 +48,10 @@ services:
     staticPublishPath: dist
     plan: free
     envVars:
+      # Pega aquí la URL del servicio fleet-backend una vez desplegado,
+      # ej: https://fleet-backend.onrender.com
       - key: VITE_BACKEND_URL
-        fromService:
-          name: fleet-backend
-          type: web
-          property: url
+        sync: false
     headers:
       - path: /*
         name: Cache-Control
@@ -70,8 +69,7 @@ services:
     dockerContext: ./backend
     plan: free
     envVars:
+      # Pega aquí la URL del servicio fleet-backend una vez desplegado,
+      # ej: https://fleet-backend.onrender.com
       - key: BACKEND_URL
-        fromService:
-          name: fleet-backend
-          type: web
-          property: url
+        sync: false
