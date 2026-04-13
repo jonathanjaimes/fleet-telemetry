@@ -59,7 +59,7 @@ export function FleetPage() {
     <div className="app">
       <header className="app-header">
         <Truck size={20} strokeWidth={1.5} />
-        <h1>Fleet Telemetry</h1>
+        <h1>Monitoreo de Flotas</h1>
         <nav className="app-header__nav">
           <button
             className={`app-header__nav-btn ${view === 'dashboard' ? 'active' : ''}`}

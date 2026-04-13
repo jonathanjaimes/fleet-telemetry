@@ -112,6 +112,14 @@ export function FleetMap() {
   const selectedId    = useFleetStore((s) => s.selectedVehicleId)
   const selectVehicle = useFleetStore((s) => s.selectVehicle)
 
+  // Patrón "derived state": cuando selectedId cambia, reiniciar isFollowing
+  // durante el render (no en un efecto) para evitar renders en cascada.
+  const [prevSelectedId, setPrevSelectedId] = useState(selectedId)
+  if (prevSelectedId !== selectedId) {
+    setPrevSelectedId(selectedId)
+    setIsFollowing(!!selectedId)
+  }
+
   useEffect(() => {
     if (mapRef.current || !containerRef.current) return
 
@@ -135,11 +143,6 @@ export function FleetMap() {
       mapRef.current = null
     }
   }, [])
-
-  useEffect(() => {
-    if (selectedId) setIsFollowing(true)
-    else setIsFollowing(false)
-  }, [selectedId])
 
   // Actualizar marcadores, popups y rutas
   useEffect(() => {

@@ -46,7 +46,7 @@ export function LoginPage() {
       <ThemeToggle floating />
       <div className="login-card">
         <div className="login-card__logo"><Truck size={40} strokeWidth={1.5} /></div>
-        <h1 className="login-card__title">Fleet Telemetry</h1>
+        <h1 className="login-card__title">Monitoreo de Flotas</h1>
         <p className="login-card__subtitle">Ingresa tu ID único para acceder</p>
 
         <form onSubmit={handleSubmit} className="login-form">

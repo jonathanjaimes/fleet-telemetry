@@ -202,7 +202,7 @@ function LoginScreen({ onLogin }: { onLogin: (id: string) => void }) {
             <View style={styles.loginLogo}>
               <MaterialIcons name="local-shipping" size={56} color={theme.primary} />
             </View>
-            <Text style={styles.loginTitle}>Fleet Telemetría</Text>
+            <Text style={styles.loginTitle}>Telemetría de Flotas</Text>
             <Text style={styles.loginSubtitle}>Ingresa tu ID de conductor</Text>
 
             <TextInput
@@ -292,7 +292,7 @@ function TelemetryScreen({ driverId, onLogout }: { driverId: string; onLogout: (
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <MaterialIcons name="local-shipping" size={22} color={theme.text} />
-          <Text style={styles.headerTitle}>Fleet Telemetría</Text>
+          <Text style={styles.headerTitle}>Telemetría de Flotas</Text>
         </View>
         <View style={styles.headerRight}>
           <View style={styles.statusBadge}>

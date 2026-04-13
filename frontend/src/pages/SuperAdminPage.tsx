@@ -49,7 +49,7 @@ export function SuperAdminPage() {
       <header className="admin-header">
         <div className="admin-header__left">
           <Truck size={20} strokeWidth={1.5} />
-          <h1>Fleet Telemetry</h1>
+          <h1>Monitoreo de Flotas</h1>
           <span className="admin-header__badge admin-header__badge--super">Superadmin</span>
         </div>
         <div className="admin-header__right">
