@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as Location from 'expo-location'
 import { sendGpsReading, sendPanicAlert, sendTripStart, sendTripStop } from '../services/api'
 import { getSocket } from '../services/socket'
@@ -6,6 +7,7 @@ import { saveAlert, getAlerts } from '../services/alertStorage'
 import type { ConnectionStatus, LocalAlert, TripState } from '../types'
 
 const SEND_INTERVAL_MS = 4000
+const TRIP_STORAGE_KEY = 'active_trip'
 
 export function useTelemetry(driverId: string) {
   const VEHICLE_ID = driverId
@@ -19,12 +21,21 @@ export function useTelemetry(driverId: string) {
   const intervalRef  = useRef<ReturnType<typeof setInterval> | null>(null)
   const stoppingRef  = useRef(false)
 
-  // Solicitar permisos de GPS al montar
+  // Solicitar permisos de GPS al montar y restaurar viaje activo
   useEffect(() => {
     Location.requestForegroundPermissionsAsync().then(({ status: s }) => {
       setPermission(s === 'granted')
     })
     getAlerts().then(setAlerts)
+
+    // Restaurar viaje activo si la app fue cerrada con un viaje en curso
+    AsyncStorage.getItem(TRIP_STORAGE_KEY).then((raw) => {
+      if (!raw) return
+      const saved: TripState = JSON.parse(raw)
+      if (saved.isActive && saved.vehicleId === VEHICLE_ID) {
+        setTrip(saved)
+      }
+    })
   }, [])
 
   // Escuchar evento vehicle:deleted desde el dashboard
@@ -38,6 +49,7 @@ export function useTelemetry(driverId: string) {
       if (intervalRef.current) clearInterval(intervalRef.current)
 
       setTrip({ isActive: false, startedAt: null, vehicleId: VEHICLE_ID })
+      AsyncStorage.removeItem(TRIP_STORAGE_KEY)
       setStatus('disconnected')
 
       const alert: Omit<LocalAlert, 'id'> = {
@@ -67,6 +79,7 @@ export function useTelemetry(driverId: string) {
       if (intervalRef.current) clearInterval(intervalRef.current)
 
       setTrip({ isActive: false, startedAt: null, vehicleId: VEHICLE_ID })
+      AsyncStorage.removeItem(TRIP_STORAGE_KEY)
       setStatus('disconnected')
 
       const alert: Omit<LocalAlert, 'id'> = {
@@ -137,19 +150,22 @@ export function useTelemetry(driverId: string) {
   const startTrip = useCallback(() => {
     stoppingRef.current = false
     sendTripStart(VEHICLE_ID)
-    setTrip({ isActive: true, startedAt: new Date().toISOString(), vehicleId: VEHICLE_ID })
+    const newTrip: TripState = { isActive: true, startedAt: new Date().toISOString(), vehicleId: VEHICLE_ID }
+    setTrip(newTrip)
+    AsyncStorage.setItem(TRIP_STORAGE_KEY, JSON.stringify(newTrip))
     setStarting(true)
-  }, [])
+  }, [VEHICLE_ID])
 
   const stopTrip = useCallback(() => {
     stoppingRef.current = true
     if (intervalRef.current) clearInterval(intervalRef.current)
     setTrip((prev) => {
       sendTripStop(prev.vehicleId)
-      return { ...prev, isActive: false }
+      const stopped = { ...prev, isActive: false }
+      AsyncStorage.setItem(TRIP_STORAGE_KEY, JSON.stringify(stopped))
+      return stopped
     })
     setStatus('disconnected')
-    // Reset después de que el backend haya procesado el flag
     setTimeout(() => { stoppingRef.current = false }, 3000)
   }, [])
 
