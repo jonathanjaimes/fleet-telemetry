@@ -4,6 +4,36 @@ Sistema de telemetría y monitoreo de flotas con GPS en tiempo real. Incluye das
 
 ---
 
+## Demo en producción
+
+El sistema está desplegado y disponible sin necesidad de configuración local:
+
+| Componente | URL |
+|---|---|
+| Dashboard web | **https://fleet-frontend.onrender.com** |
+| Backend API | https://fleet-backend-4esg.onrender.com |
+
+**Credencial de acceso (Superadmin):**
+```
+ID: SUPER-001
+```
+
+Desde el superadmin se pueden crear usuarios flota y conductores. El conductor inicia sesión en la app móvil con su ID único.
+
+> **Nota sobre el tier gratuito de Render**: el backend puede tardar entre 30 y 60 segundos en responder si estuvo inactivo. Pasado ese tiempo inicial, el sistema funciona con normalidad.
+
+> **Vehículos simulados**: el simulador no está desplegado en producción ya que los workers de Render requieren plan de pago. Para ver vehículos en el dashboard, instalar el APK en un dispositivo Android e iniciar un viaje con el conductor creado desde el panel flota. Localmente el simulador sí arranca automáticamente con `docker-compose up`.
+
+**App móvil (APK Android):**
+
+Disponible para descarga directa — no requiere Play Store:
+```
+https://expo.dev/artifacts/eas/c5gCEFHKr4BKp3jsrA2A1Q.apk
+```
+Instalar en Android habilitando "Fuentes desconocidas" y usar el ID del conductor asignado para iniciar sesión.
+
+---
+
 ## Inicio rápido
 
 ### Requisitos previos
