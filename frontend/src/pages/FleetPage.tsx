@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Truck } from 'lucide-react'
 import { useAuthStore } from '../store/useAuthStore'
 import { VehiclePanel } from '../features/vehicles/VehiclePanel'
@@ -29,18 +29,24 @@ export function FleetPage() {
   const [loading, setLoading]     = useState(false)
   const [creating, setCreating]   = useState(false)
 
-  const headers = { 'Content-Type': 'application/json', 'x-user-id': user?.unique_id ?? '' }
+  const headers = useMemo(
+    () => ({ 'Content-Type': 'application/json', 'x-user-id': user?.unique_id ?? '' }),
+    [user?.unique_id],
+  )
 
-  const fetchDrivers = async () => {
+  const fetchDrivers = useCallback(async () => {
     setLoading(true)
     const res = await fetch(`${BACKEND}/api/users/drivers`, { headers })
     if (res.ok) setDrivers(await res.json())
     setLoading(false)
-  }
+  }, [headers])
 
-  useEffect(() => {
-    if (view === 'drivers') fetchDrivers()
-  }, [view])
+  // El fetch se dispara desde el manejador del evento que cambia la vista,
+  // no desde un efecto, evitando setState síncrono en efectos.
+  const handleNavigate = useCallback(async (newView: View) => {
+    setView(newView)
+    if (newView === 'drivers') await fetchDrivers()
+  }, [fetchDrivers])
 
   const deleteDriver = async (uniqueId: string) => {
     if (!window.confirm(`¿Eliminar conductor ${uniqueId}?`)) return
@@ -63,11 +69,11 @@ export function FleetPage() {
         <nav className="app-header__nav">
           <button
             className={`app-header__nav-btn ${view === 'dashboard' ? 'active' : ''}`}
-            onClick={() => setView('dashboard')}
+            onClick={() => handleNavigate('dashboard')}
           >Dashboard</button>
           <button
             className={`app-header__nav-btn ${view === 'drivers' ? 'active' : ''}`}
-            onClick={() => setView('drivers')}
+            onClick={() => handleNavigate('drivers')}
           >Conductores</button>
         </nav>
         <span className={`badge ${isConnected ? 'badge--on' : 'badge--off'}`}>
