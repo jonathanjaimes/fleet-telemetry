@@ -4,7 +4,7 @@ import { useAuthStore } from '../store/useAuthStore'
 import { ThemeToggle } from '../components/ThemeToggle'
 import './LoginPage.css'
 
-const BACKEND = 'http://localhost:3001'
+import { BACKEND_URL as BACKEND } from '../config'
 
 export function LoginPage() {
   const login = useAuthStore((s) => s.login)

@@ -6,7 +6,7 @@ import type { GpsPoint } from './RouteMap'
 import 'leaflet/dist/leaflet.css'
 import './routes.css'
 
-const BACKEND = 'http://localhost:3001'
+import { BACKEND_URL as BACKEND } from '../../config'
 
 interface RouteRecord {
   id:         string

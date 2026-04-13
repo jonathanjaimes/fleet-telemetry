@@ -8,7 +8,7 @@ import { ALERT_CONFIG } from '../../types'
 import type { AlertType } from '../../types'
 import './vehicles.css'
 
-const BACKEND = 'http://localhost:3001'
+import { BACKEND_URL as BACKEND } from '../../config'
 
 type Tab = 'fleet' | 'alerts' | 'routes'
 

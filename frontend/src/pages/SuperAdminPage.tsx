@@ -4,7 +4,7 @@ import { useAuthStore } from '../store/useAuthStore'
 import { ThemeToggle } from '../components/ThemeToggle'
 import './AdminPage.css'
 
-const BACKEND = 'http://localhost:3001'
+import { BACKEND_URL as BACKEND } from '../config'
 
 interface FleetUser {
   id: string

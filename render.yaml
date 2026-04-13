@@ -1,0 +1,77 @@
+databases:
+  - name: fleet-postgres
+    databaseName: fleet_telemetry
+    user: fleet_user
+    plan: free
+
+services:
+  # ── Backend API ──────────────────────────────────────────────────────────────
+  - type: web
+    name: fleet-backend
+    env: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    envVars:
+      - key: PORT
+        value: 3001
+      - key: DB_HOST
+        fromDatabase:
+          name: fleet-postgres
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: fleet-postgres
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: fleet-postgres
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: fleet-postgres
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: fleet-postgres
+          property: password
+      # Obtén una URL gratuita en https://upstash.com → Redis → Create Database
+      - key: REDIS_URL
+        sync: false   # Debes pegarlo manualmente en el dashboard de Render
+
+  # ── Frontend SPA ─────────────────────────────────────────────────────────────
+  - type: web
+    name: fleet-frontend
+    env: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    plan: free
+    envVars:
+      - key: VITE_BACKEND_URL
+        fromService:
+          name: fleet-backend
+          type: web
+          property: url
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: no-cache
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  # ── Simulador de vehículos ───────────────────────────────────────────────────
+  - type: worker
+    name: fleet-simulator
+    env: docker
+    dockerfilePath: ./backend/Dockerfile.simulator
+    dockerContext: ./backend
+    plan: free
+    envVars:
+      - key: BACKEND_URL
+        fromService:
+          name: fleet-backend
+          type: web
+          property: url
