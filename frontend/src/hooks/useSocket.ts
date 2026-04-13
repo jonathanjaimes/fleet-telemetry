@@ -26,7 +26,7 @@ export function useSocket() {
 
     const headers = { 'x-user-id': user.unique_id }
 
-    socket = io(SOCKET_URL, { transports: ['websocket'] })
+    socket = io(SOCKET_URL, { transports: ['polling', 'websocket'] })
 
     socket.on('connect', async () => {
       setConnected(true)
